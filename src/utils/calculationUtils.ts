@@ -57,7 +57,7 @@ export const calculateFinalGrade = (midterm: number, finals: number): number => 
 // Calculate GPE based on the fixed grading scale
 export const calculateGPE = (finalGrade: number): string => {
   // Round down to the nearest whole number for evaluation
-  const roundedGrade = Math.round(finalGrade);
+  const roundedGrade = Math.floor(finalGrade);
   
   if (roundedGrade < 75) return "5.00";
   
@@ -76,7 +76,7 @@ export const calculateGPE = (finalGrade: number): string => {
 
 // Get color based on grade
 export const getGradeColor = (finalGrade: number): string => {
-  const roundedGrade = Math.round(finalGrade);
+  const roundedGrade = Math.floor(finalGrade);
   
   if (roundedGrade < 75) return "text-calc-red"; // Failed
   if (roundedGrade < 80) return "text-yellow-500"; // Passed but needs improvement
@@ -86,11 +86,6 @@ export const getGradeColor = (finalGrade: number): string => {
 
 // Format final grade with detailed precision in parentheses
 export const formatFinalGrade = (finalGrade: number): string => {
-  const roundedGrade = Math.round(finalGrade);
+  const roundedGrade = Math.floor(finalGrade);
   return `${roundedGrade} (${finalGrade.toFixed(2)})`;
-};
-
-// Check if there are any validation errors
-export const hasValidationErrors = (errors: { [key: string]: string | null }): boolean => {
-  return Object.values(errors).some(error => error !== null);
 };

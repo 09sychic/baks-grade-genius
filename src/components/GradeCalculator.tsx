@@ -1,15 +1,14 @@
 
 import React, { useState, useEffect } from "react";
 import GradingPeriod from "./GradingPeriod";
-import { Calculator, AlertCircle, Check } from "lucide-react";
+import { Calculator, AlertCircle } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { 
   calculatePeriodGrade, 
   calculateFinalGrade, 
   calculateGPE,
   getGradeColor,
-  formatFinalGrade,
-  hasValidationErrors
+  formatFinalGrade
 } from "@/utils/calculationUtils";
 
 const GradeCalculator: React.FC = () => {
@@ -42,9 +41,6 @@ const GradeCalculator: React.FC = () => {
     finals: {}
   });
 
-  // Form submission status
-  const [formSubmitted, setFormSubmitted] = useState(false);
-
   // Calculated grades
   const [grades, setGrades] = useState({
     midterm: 0,
@@ -68,9 +64,6 @@ const GradeCalculator: React.FC = () => {
 
   // Handle changes to midterm inputs with validation
   const handleMidtermChange = (field: string, value: number | null, index?: number) => {
-    // Reset form submission status when user makes changes
-    if (formSubmitted) setFormSubmitted(false);
-    
     // Validate the input
     let error: string | null = null;
     let maxValue = 100;
@@ -92,7 +85,7 @@ const GradeCalculator: React.FC = () => {
       }
     }));
     
-    // Update the state
+    // If there's no error, update the state
     setMidtermState((prev) => {
       if (index !== undefined && (field === "quizScores" || field === "quizMaxScores")) {
         const newArray = [...prev[field]];
@@ -105,9 +98,6 @@ const GradeCalculator: React.FC = () => {
 
   // Handle changes to finals inputs with validation
   const handleFinalsChange = (field: string, value: number | null, index?: number) => {
-    // Reset form submission status when user makes changes
-    if (formSubmitted) setFormSubmitted(false);
-    
     // Validate the input
     let error: string | null = null;
     let maxValue = 100;
@@ -129,7 +119,7 @@ const GradeCalculator: React.FC = () => {
       }
     }));
     
-    // Update the state
+    // If there's no error, update the state
     setFinalsState((prev) => {
       if (index !== undefined && (field === "quizScores" || field === "quizMaxScores")) {
         const newArray = [...prev[field]];
@@ -140,13 +130,8 @@ const GradeCalculator: React.FC = () => {
     });
   };
 
-  // Calculate grades whenever inputs change and there are no errors
+  // Calculate grades whenever inputs change
   useEffect(() => {
-    // Skip calculation if there are validation errors or form hasn't been submitted yet
-    if (hasValidationErrors(errors.midterm) || hasValidationErrors(errors.finals) || !formSubmitted) {
-      return;
-    }
-
     // Calculate midterm grade
     const midtermGrade = calculatePeriodGrade(
       midtermState.quizScores.filter((score): score is number => score !== null),
@@ -177,60 +162,11 @@ const GradeCalculator: React.FC = () => {
       finalGrade: finalGrade,
       gpe: gpe,
     });
-  }, [midtermState, finalsState, errors, formSubmitted]);
+  }, [midtermState, finalsState]);
 
   // Function to get grade color class
   const getColorClass = (grade: number) => {
     return getGradeColor(grade);
-  };
-
-  // Handle form submission
-  const handleCalculate = () => {
-    setFormSubmitted(true);
-
-    // Validate all fields
-    const midtermErrors: { [key: string]: string | null } = {};
-    const finalsErrors: { [key: string]: string | null } = {};
-
-    // Validate midterm quizzes
-    midtermState.quizScores.forEach((score, index) => {
-      const maxScore = midtermState.quizMaxScores[index] || 100;
-      midtermErrors[`quizScores${index}`] = validateInput(score, 'quizScores', maxScore);
-    });
-
-    // Validate midterm quiz max scores
-    midtermState.quizMaxScores.forEach((maxScore, index) => {
-      midtermErrors[`quizMaxScores${index}`] = validateInput(maxScore, 'quizMaxScores');
-    });
-
-    // Validate other midterm fields
-    midtermErrors.examScore = validateInput(midtermState.examScore, 'examScore', midtermState.examMaxScore || 100);
-    midtermErrors.examMaxScore = validateInput(midtermState.examMaxScore, 'examMaxScore');
-    midtermErrors.attendance = validateInput(midtermState.attendance, 'attendance', 10);
-    midtermErrors.problemSet = validateInput(midtermState.problemSet, 'problemSet', 10);
-
-    // Validate finals quizzes
-    finalsState.quizScores.forEach((score, index) => {
-      const maxScore = finalsState.quizMaxScores[index] || 100;
-      finalsErrors[`quizScores${index}`] = validateInput(score, 'quizScores', maxScore);
-    });
-
-    // Validate finals quiz max scores
-    finalsState.quizMaxScores.forEach((maxScore, index) => {
-      finalsErrors[`quizMaxScores${index}`] = validateInput(maxScore, 'quizMaxScores');
-    });
-
-    // Validate other finals fields
-    finalsErrors.examScore = validateInput(finalsState.examScore, 'examScore', finalsState.examMaxScore || 100);
-    finalsErrors.examMaxScore = validateInput(finalsState.examMaxScore, 'examMaxScore');
-    finalsErrors.attendance = validateInput(finalsState.attendance, 'attendance', 10);
-    finalsErrors.problemSet = validateInput(finalsState.problemSet, 'problemSet', 10);
-
-    // Update the errors state
-    setErrors({
-      midterm: midtermErrors,
-      finals: finalsErrors,
-    });
   };
 
   return (
@@ -256,7 +192,7 @@ const GradeCalculator: React.FC = () => {
           examMaxScore={midtermState.examMaxScore}
           attendance={midtermState.attendance}
           problemSet={midtermState.problemSet}
-          periodGrade={formSubmitted && !hasValidationErrors(errors.midterm) ? grades.midterm : 0}
+          periodGrade={grades.midterm}
           onChange={handleMidtermChange}
           errors={errors.midterm}
         />
@@ -270,59 +206,26 @@ const GradeCalculator: React.FC = () => {
           examMaxScore={finalsState.examMaxScore}
           attendance={finalsState.attendance}
           problemSet={finalsState.problemSet}
-          periodGrade={formSubmitted && !hasValidationErrors(errors.finals) ? grades.finals : 0}
+          periodGrade={grades.finals}
           onChange={handleFinalsChange}
           errors={errors.finals}
         />
       </div>
 
-      {/* Calculate Button */}
-      <div className="mt-6 mb-8">
-        <button 
-          onClick={handleCalculate}
-          className="w-full py-3 bg-calc-purple hover:bg-calc-dark-purple text-white font-bold rounded-lg transition-all duration-300 flex items-center justify-center gap-2"
-        >
-          <Calculator className="h-5 w-5" />
-          Calculate Grades
-        </button>
-        
-        {formSubmitted && (hasValidationErrors(errors.midterm) || hasValidationErrors(errors.finals)) && (
-          <Alert className="mt-4 border-calc-red bg-calc-red/10 text-calc-red">
-            <AlertCircle className="h-4 w-4" />
-            <AlertDescription>
-              Please correct the errors before calculating grades
-            </AlertDescription>
-          </Alert>
-        )}
-        
-        {formSubmitted && !hasValidationErrors(errors.midterm) && !hasValidationErrors(errors.finals) && (
-          <Alert className="mt-4 border-green-500 bg-green-500/10 text-green-500">
-            <Check className="h-4 w-4" />
-            <AlertDescription>
-              Grades calculated successfully
-            </AlertDescription>
-          </Alert>
-        )}
-      </div>
-
       {/* Final Results */}
-      <div className={`calculator-card mt-8 ${!formSubmitted || hasValidationErrors(errors.midterm) || hasValidationErrors(errors.finals) ? 'opacity-50' : ''}`}>
+      <div className="calculator-card mt-8">
         <div className="card-header bg-calc-dark-purple">Final Results</div>
         <div className="calculator-body grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="grade-result">
             <h3>Final Grade</h3>
-            <div className={`grade-value text-2xl ${formSubmitted && !hasValidationErrors(errors.midterm) && !hasValidationErrors(errors.finals) ? getColorClass(grades.finalGrade) : 'text-gray-400'}`}>
-              {formSubmitted && !hasValidationErrors(errors.midterm) && !hasValidationErrors(errors.finals) 
-                ? formatFinalGrade(grades.finalGrade)
-                : "N/A"}
+            <div className={`grade-value text-2xl ${getColorClass(grades.finalGrade)}`}>
+              {formatFinalGrade(grades.finalGrade)}
             </div>
           </div>
           <div className="grade-result">
             <h3>Grade Point Equivalent (GPE)</h3>
-            <div className={`grade-value text-2xl ${formSubmitted && !hasValidationErrors(errors.midterm) && !hasValidationErrors(errors.finals) ? getColorClass(grades.finalGrade) : 'text-gray-400'}`}>
-              {formSubmitted && !hasValidationErrors(errors.midterm) && !hasValidationErrors(errors.finals) 
-                ? grades.gpe
-                : "N/A"}
+            <div className={`grade-value text-2xl ${getColorClass(grades.finalGrade)}`}>
+              {grades.gpe}
             </div>
           </div>
         </div>
