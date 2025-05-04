@@ -55,13 +55,17 @@ const GradingPeriod: React.FC<GradingPeriodProps> = ({
   };
 
   return (
-    <div className="calculator-card">
-      <div className="card-header">{periodName}</div>
-      <div className="calculator-body">
+    <div className="calculator-card shadow-lg">
+      <div className="card-header flex items-center justify-center">
+        <h2 className="text-lg font-semibold">{periodName}</h2>
+      </div>
+      <div className="calculator-body space-y-5">
         {/* Quiz Inputs */}
         {[0, 1].map((i) => (
           <div key={`quiz-${quizNumbers[i]}`} className="input-group">
-            <label htmlFor={`quiz${quizNumbers[i]}`}>Quiz {quizNumbers[i]}</label>
+            <label htmlFor={`quiz${quizNumbers[i]}`} className="text-base font-medium text-gray-200">
+              Quiz {quizNumbers[i]}
+            </label>
             <div className="flex flex-col flex-1 w-full">
               <div className="input-pair">
                 <div className="flex flex-col flex-1">
@@ -72,7 +76,7 @@ const GradingPeriod: React.FC<GradingPeriodProps> = ({
                     value={quizScores[i] === null ? "" : quizScores[i]}
                     onChange={(e) => handleInputChange(e, "quizScores", i)}
                     placeholder="Score"
-                    className={`flex-1 ${errors[`quizScores${i}`] ? "border-calc-red focus:ring-calc-red" : ""}`}
+                    className={`flex-1 h-11 rounded-md ${errors[`quizScores${i}`] ? "border-calc-red focus-visible:ring-calc-red" : "border-gray-600 focus-visible:ring-calc-purple"}`}
                   />
                   {errors[`quizScores${i}`] && (
                     <div className="text-xs text-calc-red flex items-center mt-1">
@@ -88,7 +92,7 @@ const GradingPeriod: React.FC<GradingPeriodProps> = ({
                     value={quizMaxScores[i] === null ? "" : quizMaxScores[i]}
                     onChange={(e) => handleInputChange(e, "quizMaxScores", i)}
                     placeholder="Max (default 100)"
-                    className={`flex-1 ${errors[`quizMaxScores${i}`] ? "border-calc-red focus:ring-calc-red" : ""}`}
+                    className={`flex-1 h-11 rounded-md ${errors[`quizMaxScores${i}`] ? "border-calc-red focus-visible:ring-calc-red" : "border-gray-600 focus-visible:ring-calc-purple"}`}
                   />
                   {errors[`quizMaxScores${i}`] && (
                     <div className="text-xs text-calc-red flex items-center mt-1">
@@ -104,7 +108,9 @@ const GradingPeriod: React.FC<GradingPeriodProps> = ({
 
         {/* Major Exam */}
         <div className="input-group">
-          <label htmlFor={`exam-${periodName}`}>Major Exam</label>
+          <label htmlFor={`exam-${periodName}`} className="text-base font-medium text-gray-200">
+            Major Exam
+          </label>
           <div className="flex flex-col flex-1 w-full">
             <div className="input-pair">
               <div className="flex flex-col flex-1">
@@ -115,7 +121,7 @@ const GradingPeriod: React.FC<GradingPeriodProps> = ({
                   value={examScore === null ? "" : examScore}
                   onChange={(e) => handleInputChange(e, "examScore")}
                   placeholder="Score"
-                  className={`flex-1 ${errors.examScore ? "border-calc-red focus:ring-calc-red" : ""}`}
+                  className={`flex-1 h-11 rounded-md ${errors.examScore ? "border-calc-red focus-visible:ring-calc-red" : "border-gray-600 focus-visible:ring-calc-purple"}`}
                 />
                 {errors.examScore && (
                   <div className="text-xs text-calc-red flex items-center mt-1">
@@ -131,7 +137,7 @@ const GradingPeriod: React.FC<GradingPeriodProps> = ({
                   value={examMaxScore === null ? "" : examMaxScore}
                   onChange={(e) => handleInputChange(e, "examMaxScore")}
                   placeholder="Max (default 100)"
-                  className={`flex-1 ${errors.examMaxScore ? "border-calc-red focus:ring-calc-red" : ""}`}
+                  className={`flex-1 h-11 rounded-md ${errors.examMaxScore ? "border-calc-red focus-visible:ring-calc-red" : "border-gray-600 focus-visible:ring-calc-purple"}`}
                 />
                 {errors.examMaxScore && (
                   <div className="text-xs text-calc-red flex items-center mt-1">
@@ -146,7 +152,9 @@ const GradingPeriod: React.FC<GradingPeriodProps> = ({
 
         {/* Attendance */}
         <div className="input-group">
-          <label htmlFor={`attendance-${periodName}`}>Attendance</label>
+          <label htmlFor={`attendance-${periodName}`} className="text-base font-medium text-gray-200">
+            Attendance
+          </label>
           <div className="flex flex-col flex-1">
             <Input
               id={`attendance-${periodName}`}
@@ -156,7 +164,7 @@ const GradingPeriod: React.FC<GradingPeriodProps> = ({
               value={attendance === null ? "" : attendance}
               onChange={(e) => handleInputChange(e, "attendance")}
               placeholder="Out of 10"
-              className={`flex-1 ${errors.attendance ? "border-calc-red focus:ring-calc-red" : ""}`}
+              className={`flex-1 h-11 rounded-md ${errors.attendance ? "border-calc-red focus-visible:ring-calc-red" : "border-gray-600 focus-visible:ring-calc-purple"}`}
             />
             {errors.attendance && (
               <div className="text-xs text-calc-red flex items-center mt-1">
@@ -169,7 +177,9 @@ const GradingPeriod: React.FC<GradingPeriodProps> = ({
 
         {/* Problem Set */}
         <div className="input-group">
-          <label htmlFor={`problemSet-${periodName}`}>Problem Set</label>
+          <label htmlFor={`problemSet-${periodName}`} className="text-base font-medium text-gray-200">
+            Problem Set
+          </label>
           <div className="flex flex-col flex-1">
             <Input
               id={`problemSet-${periodName}`}
@@ -179,7 +189,7 @@ const GradingPeriod: React.FC<GradingPeriodProps> = ({
               value={problemSet === null ? "" : problemSet}
               onChange={(e) => handleInputChange(e, "problemSet")}
               placeholder="Out of 10"
-              className={`flex-1 ${errors.problemSet ? "border-calc-red focus:ring-calc-red" : ""}`}
+              className={`flex-1 h-11 rounded-md ${errors.problemSet ? "border-calc-red focus-visible:ring-calc-red" : "border-gray-600 focus-visible:ring-calc-purple"}`}
             />
             {errors.problemSet && (
               <div className="text-xs text-calc-red flex items-center mt-1">
@@ -191,9 +201,9 @@ const GradingPeriod: React.FC<GradingPeriodProps> = ({
         </div>
 
         {/* Period Grade Display */}
-        <div className="grade-result">
-          <h3>{periodName} Grade</h3>
-          <div className={`grade-value ${getGradeColor(periodGrade)}`}>
+        <div className="grade-result rounded-xl bg-gray-700/70 backdrop-blur-sm">
+          <h3 className="text-calc-purple font-semibold text-lg">{periodName} Grade</h3>
+          <div className={`grade-value text-2xl font-bold ${getGradeColor(periodGrade)}`}>
             {Math.floor(periodGrade)} ({periodGrade.toFixed(2)})
           </div>
         </div>
