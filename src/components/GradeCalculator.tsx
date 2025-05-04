@@ -1,11 +1,14 @@
 
 import React, { useState, useEffect } from "react";
 import GradingPeriod from "./GradingPeriod";
-import { Calculator } from "lucide-react";
+import { Calculator, AlertCircle } from "lucide-react";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { 
   calculatePeriodGrade, 
   calculateFinalGrade, 
-  calculateGPE 
+  calculateGPE,
+  getGradeColor,
+  formatFinalGrade
 } from "@/utils/calculationUtils";
 
 const GradeCalculator: React.FC = () => {
@@ -29,6 +32,15 @@ const GradeCalculator: React.FC = () => {
     problemSet: null as number | null,
   });
 
+  // Validation state
+  const [errors, setErrors] = useState<{
+    midterm: { [key: string]: string | null },
+    finals: { [key: string]: string | null }
+  }>({
+    midterm: {},
+    finals: {}
+  });
+
   // Calculated grades
   const [grades, setGrades] = useState({
     midterm: 0,
@@ -37,8 +49,43 @@ const GradeCalculator: React.FC = () => {
     gpe: "N/A",
   });
 
-  // Handle changes to midterm inputs
+  // Validate inputs
+  const validateInput = (value: number | null, field: string, max: number = 100): string | null => {
+    if (value === null) return null;
+    if (isNaN(Number(value))) return "Must be a number";
+    if (value < 0) return "Cannot be negative";
+    if (field.includes("attendance") || field.includes("problemSet")) {
+      if (value > 10) return "Maximum is 10";
+    } else if (value > max) {
+      return `Maximum is ${max}`;
+    }
+    return null;
+  };
+
+  // Handle changes to midterm inputs with validation
   const handleMidtermChange = (field: string, value: number | null, index?: number) => {
+    // Validate the input
+    let error: string | null = null;
+    let maxValue = 100;
+    
+    if (field === "quizScores" && index !== undefined) {
+      maxValue = midtermState.quizMaxScores[index] || 100;
+    } else if (field === "examScore") {
+      maxValue = midtermState.examMaxScore || 100;
+    }
+    
+    error = validateInput(value, field, maxValue);
+    
+    // Update errors state
+    setErrors(prev => ({
+      ...prev,
+      midterm: {
+        ...prev.midterm,
+        [index !== undefined ? `${field}${index}` : field]: error
+      }
+    }));
+    
+    // If there's no error, update the state
     setMidtermState((prev) => {
       if (index !== undefined && (field === "quizScores" || field === "quizMaxScores")) {
         const newArray = [...prev[field]];
@@ -49,8 +96,30 @@ const GradeCalculator: React.FC = () => {
     });
   };
 
-  // Handle changes to finals inputs
+  // Handle changes to finals inputs with validation
   const handleFinalsChange = (field: string, value: number | null, index?: number) => {
+    // Validate the input
+    let error: string | null = null;
+    let maxValue = 100;
+    
+    if (field === "quizScores" && index !== undefined) {
+      maxValue = finalsState.quizMaxScores[index] || 100;
+    } else if (field === "examScore") {
+      maxValue = finalsState.examMaxScore || 100;
+    }
+    
+    error = validateInput(value, field, maxValue);
+    
+    // Update errors state
+    setErrors(prev => ({
+      ...prev,
+      finals: {
+        ...prev.finals,
+        [index !== undefined ? `${field}${index}` : field]: error
+      }
+    }));
+    
+    // If there's no error, update the state
     setFinalsState((prev) => {
       if (index !== undefined && (field === "quizScores" || field === "quizMaxScores")) {
         const newArray = [...prev[field]];
@@ -95,6 +164,11 @@ const GradeCalculator: React.FC = () => {
     });
   }, [midtermState, finalsState]);
 
+  // Function to get grade color class
+  const getColorClass = (grade: number) => {
+    return getGradeColor(grade);
+  };
+
   return (
     <div className="w-full max-w-3xl mx-auto">
       <div className="text-center mb-6">
@@ -120,6 +194,7 @@ const GradeCalculator: React.FC = () => {
           problemSet={midtermState.problemSet}
           periodGrade={grades.midterm}
           onChange={handleMidtermChange}
+          errors={errors.midterm}
         />
 
         <GradingPeriod
@@ -133,6 +208,7 @@ const GradeCalculator: React.FC = () => {
           problemSet={finalsState.problemSet}
           periodGrade={grades.finals}
           onChange={handleFinalsChange}
+          errors={errors.finals}
         />
       </div>
 
@@ -142,11 +218,15 @@ const GradeCalculator: React.FC = () => {
         <div className="calculator-body grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="grade-result">
             <h3>Final Grade</h3>
-            <div className="grade-value text-2xl">{grades.finalGrade.toFixed(2)}</div>
+            <div className={`grade-value text-2xl ${getColorClass(grades.finalGrade)}`}>
+              {formatFinalGrade(grades.finalGrade)}
+            </div>
           </div>
           <div className="grade-result">
             <h3>Grade Point Equivalent (GPE)</h3>
-            <div className="grade-value text-2xl">{grades.gpe}</div>
+            <div className={`grade-value text-2xl ${getColorClass(grades.finalGrade)}`}>
+              {grades.gpe}
+            </div>
           </div>
         </div>
       </div>

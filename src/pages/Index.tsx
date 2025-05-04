@@ -8,7 +8,7 @@ const Index: React.FC = () => {
       <div className="container mx-auto">
         <GradeCalculator />
         <footer className="text-center text-sm text-gray-400 mt-8 pb-4">
-          © 2025 Calculus ni Baks | A handy professor-grade calculator
+          Developed by @driyqnn
         </footer>
       </div>
     </div>
