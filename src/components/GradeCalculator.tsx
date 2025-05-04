@@ -98,7 +98,7 @@ const GradeCalculator: React.FC = () => {
   return (
     <div className="w-full max-w-3xl mx-auto">
       <div className="text-center mb-6">
-        <h1 className="text-3xl font-bold text-calc-dark-purple flex items-center justify-center gap-2">
+        <h1 className="text-3xl font-bold text-calc-purple flex items-center justify-center gap-2">
           <Calculator className="h-8 w-8" />
           <span>Calculus ni Baks</span>
         </h1>

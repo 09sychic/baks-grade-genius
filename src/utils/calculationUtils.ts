@@ -7,14 +7,14 @@ export const calculateAdjustedQuiz = (scores: number[], maxScores: number[]): nu
     return 0;
   }
 
-  // Calculate percentage for each quiz
+  // Calculate percentage for each quiz (out of 100)
   const percentages = scores.map((score, index) => (score / maxScores[index]) * 100);
   
-  // Calculate average
+  // Calculate average percentage
   const average = percentages.reduce((sum, percent) => sum + percent, 0) / percentages.length;
   
-  // Apply formula: (avg * 0.65 + 50) * 0.35
-  return (average * 0.65 + 50) * 0.35;
+  // Apply formula: ((score * 0.5) + 50) * 0.35
+  return ((average * 0.5) + 50) * 0.35;
 };
 
 // Calculate adjusted exam score
@@ -23,11 +23,11 @@ export const calculateAdjustedExam = (score: number, maxScore: number): number =
     return 0;
   }
   
-  // Convert to percentage
+  // Convert to percentage (out of 100)
   const percentage = (score / maxScore) * 100;
   
-  // Apply formula: (score * 0.75 + 50) * 0.45
-  return (percentage * 0.75 + 50) * 0.45;
+  // Apply formula: ((score * 0.5) + 50) * 0.45
+  return ((percentage * 0.5) + 50) * 0.45;
 };
 
 // Calculate the period grade (midterm or finals)
@@ -42,8 +42,11 @@ export const calculatePeriodGrade = (
   const adjustedQuiz = calculateAdjustedQuiz(quizScores, quizMaxScores);
   const adjustedExam = calculateAdjustedExam(examScore, examMaxScore);
   
-  // Add attendance and problem set directly
-  return adjustedQuiz + adjustedExam + attendance + problemSet;
+  // Convert attendance and problem set to percentage (out of 100) before adding
+  const attendancePercentage = attendance / 10 * 100;
+  const problemSetPercentage = problemSet / 10 * 100;
+  
+  return adjustedQuiz + adjustedExam + (attendancePercentage * 0.10) + (problemSetPercentage * 0.10);
 };
 
 // Calculate final grade
@@ -51,7 +54,7 @@ export const calculateFinalGrade = (midterm: number, finals: number): number => 
   return midterm * 0.30 + finals * 0.70;
 };
 
-// Calculate GPE
+// Calculate GPE based on the fixed grading scale
 export const calculateGPE = (finalGrade: number): string => {
   if (finalGrade < 75) return "5.00";
   
