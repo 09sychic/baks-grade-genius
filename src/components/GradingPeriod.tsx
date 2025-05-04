@@ -46,7 +46,7 @@ const GradingPeriod: React.FC<GradingPeriodProps> = ({
 
   // Helper function to get color based on period grade
   const getGradeColor = (grade: number): string => {
-    const roundedGrade = Math.floor(grade);
+    const roundedGrade = Math.round(grade);
     
     if (roundedGrade < 75) return "text-calc-red"; // Failed
     if (roundedGrade < 80) return "text-yellow-500"; // Passed but needs improvement
@@ -155,7 +155,7 @@ const GradingPeriod: React.FC<GradingPeriodProps> = ({
           <label htmlFor={`attendance-${periodName}`} className="text-base font-medium text-gray-200">
             Attendance
           </label>
-          <div className="flex flex-col flex-1">
+          <div className="flex flex-col md:w-1/3">
             <Input
               id={`attendance-${periodName}`}
               type="number"
@@ -180,7 +180,7 @@ const GradingPeriod: React.FC<GradingPeriodProps> = ({
           <label htmlFor={`problemSet-${periodName}`} className="text-base font-medium text-gray-200">
             Problem Set
           </label>
-          <div className="flex flex-col flex-1">
+          <div className="flex flex-col md:w-1/3">
             <Input
               id={`problemSet-${periodName}`}
               type="number"
@@ -204,7 +204,7 @@ const GradingPeriod: React.FC<GradingPeriodProps> = ({
         <div className="grade-result rounded-xl bg-gray-700/70 backdrop-blur-sm">
           <h3 className="text-calc-purple font-semibold text-lg">{periodName} Grade</h3>
           <div className={`grade-value text-2xl font-bold ${getGradeColor(periodGrade)}`}>
-            {Math.floor(periodGrade)} ({periodGrade.toFixed(2)})
+            {Math.round(periodGrade)} {periodGrade > 0 ? `(${periodGrade.toFixed(2)})` : ""}
           </div>
         </div>
       </div>
