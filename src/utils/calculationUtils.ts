@@ -100,10 +100,18 @@ export const calculatePointsNeeded = (
     };
   }
   
-  // Default case: not enough information
+  // Default case: if both are empty, calculate minimum scores needed for both
+  // For the default case, we'll calculate how many points are needed in both periods
+  // assuming equal performance in both (as a starting point)
+  
+  // If target = midterm * 0.3 + finals * 0.7 = 75
+  // and if midterm = finals = x (equal performance)
+  // then 75 = x * 0.3 + x * 0.7 = x
+  // so x = 75
+  
   return {
-    midtermNeeded: null,
-    finalsNeeded: null,
+    midtermNeeded: 75,
+    finalsNeeded: 75,
     isPossible: true
   };
 };

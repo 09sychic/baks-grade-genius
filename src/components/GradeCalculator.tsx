@@ -274,7 +274,7 @@ const GradeCalculator: React.FC = () => {
               }`}>
                 {grades.finalGrade >= 75 
                   ? "You are currently passing! 🎉" 
-                  : "Need to improve both midterm and finals grades"}
+                  : `You need to improve your grades by ${Math.ceil(75 - grades.finalGrade)} points`}
               </div>
             </div>
           )}
