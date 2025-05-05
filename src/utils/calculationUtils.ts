@@ -54,10 +54,64 @@ export const calculateFinalGrade = (midterm: number, finals: number): number => 
   return midterm * 0.30 + finals * 0.70;
 };
 
+// Natural rounding function (rounds to nearest whole number, .5 rounds up)
+export const naturalRound = (num: number): number => {
+  return Math.round(num);
+};
+
+// Calculate points needed to reach a 75 final grade
+export const calculatePointsNeeded = (
+  currentMidterm: number, 
+  currentFinals: number,
+  targetGrade: number = 75
+): { 
+  midtermNeeded: number | null, 
+  finalsNeeded: number | null,
+  isPossible: boolean
+} => {
+  // If both midterm and finals are valid, calculate how much more is needed
+  if (currentMidterm > 0 && currentFinals === 0) {
+    // Calculate how many points needed in finals
+    // target = midterm * 0.3 + finalsNeeded * 0.7
+    // finalsNeeded = (target - midterm * 0.3) / 0.7
+    const finalsNeeded = (targetGrade - currentMidterm * 0.3) / 0.7;
+    return {
+      midtermNeeded: null,
+      finalsNeeded: finalsNeeded > 100 ? null : finalsNeeded,
+      isPossible: finalsNeeded <= 100
+    };
+  } else if (currentMidterm === 0 && currentFinals > 0) {
+    // Calculate how many points needed in midterm
+    // target = midtermNeeded * 0.3 + finals * 0.7
+    // midtermNeeded = (target - finals * 0.7) / 0.3
+    const midtermNeeded = (targetGrade - currentFinals * 0.7) / 0.3;
+    return {
+      midtermNeeded: midtermNeeded > 100 ? null : midtermNeeded,
+      finalsNeeded: null,
+      isPossible: midtermNeeded <= 100
+    };
+  } else if (currentMidterm > 0 && currentFinals > 0) {
+    // Both are already completed, check if they reach the target
+    const currentFinalGrade = calculateFinalGrade(currentMidterm, currentFinals);
+    return {
+      midtermNeeded: null,
+      finalsNeeded: null,
+      isPossible: currentFinalGrade >= targetGrade
+    };
+  }
+  
+  // Default case: not enough information
+  return {
+    midtermNeeded: null,
+    finalsNeeded: null,
+    isPossible: true
+  };
+};
+
 // Calculate GPE based on the fixed grading scale
 export const calculateGPE = (finalGrade: number): string => {
-  // Round down to the nearest whole number for evaluation
-  const roundedGrade = Math.floor(finalGrade);
+  // Round to the nearest whole number for evaluation
+  const roundedGrade = naturalRound(finalGrade);
   
   if (roundedGrade < 75) return "5.00";
   
@@ -76,7 +130,7 @@ export const calculateGPE = (finalGrade: number): string => {
 
 // Get color based on grade
 export const getGradeColor = (finalGrade: number): string => {
-  const roundedGrade = Math.floor(finalGrade);
+  const roundedGrade = naturalRound(finalGrade);
   
   if (roundedGrade < 75) return "text-calc-red"; // Failed
   if (roundedGrade < 80) return "text-yellow-500"; // Passed but needs improvement
@@ -86,6 +140,6 @@ export const getGradeColor = (finalGrade: number): string => {
 
 // Format final grade with detailed precision in parentheses
 export const formatFinalGrade = (finalGrade: number): string => {
-  const roundedGrade = Math.floor(finalGrade);
+  const roundedGrade = naturalRound(finalGrade);
   return `${roundedGrade} (${finalGrade.toFixed(2)})`;
 };

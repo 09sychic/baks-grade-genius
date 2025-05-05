@@ -8,7 +8,9 @@ import {
   calculateFinalGrade, 
   calculateGPE,
   getGradeColor,
-  formatFinalGrade
+  formatFinalGrade,
+  calculatePointsNeeded,
+  naturalRound
 } from "@/utils/calculationUtils";
 
 const GradeCalculator: React.FC = () => {
@@ -18,8 +20,8 @@ const GradeCalculator: React.FC = () => {
     quizMaxScores: [100, 100] as [number | null, number | null],
     examScore: null as number | null,
     examMaxScore: 100 as number | null,
-    attendance: null as number | null,
-    problemSet: null as number | null,
+    attendance: 10 as number | null,
+    problemSet: 10 as number | null,
   });
 
   // Finals state
@@ -28,8 +30,8 @@ const GradeCalculator: React.FC = () => {
     quizMaxScores: [100, 100] as [number | null, number | null],
     examScore: null as number | null,
     examMaxScore: 100 as number | null,
-    attendance: null as number | null,
-    problemSet: null as number | null,
+    attendance: 10 as number | null,
+    problemSet: 10 as number | null,
   });
 
   // Validation state
@@ -48,6 +50,19 @@ const GradeCalculator: React.FC = () => {
     finalGrade: 0,
     gpe: "N/A",
   });
+
+  // Points needed to reach 75
+  const [pointsNeeded, setPointsNeeded] = useState({
+    midtermNeeded: null as number | null,
+    finalsNeeded: null as number | null,
+    isPossible: true,
+  });
+
+  // Check if there are any validation errors
+  const hasErrors = () => {
+    return Object.values(errors.midterm).some(error => error !== null) || 
+           Object.values(errors.finals).some(error => error !== null);
+  };
 
   // Validate inputs
   const validateInput = (value: number | null, field: string, max: number = 100): string | null => {
@@ -132,14 +147,19 @@ const GradeCalculator: React.FC = () => {
 
   // Calculate grades whenever inputs change
   useEffect(() => {
+    // If there are validation errors, don't calculate
+    if (hasErrors()) {
+      return;
+    }
+
     // Calculate midterm grade
     const midtermGrade = calculatePeriodGrade(
       midtermState.quizScores.filter((score): score is number => score !== null),
       midtermState.quizMaxScores.filter((max): max is number => max !== null),
       midtermState.examScore || 0,
       midtermState.examMaxScore || 100,
-      midtermState.attendance || 0,
-      midtermState.problemSet || 0
+      midtermState.attendance || 10,
+      midtermState.problemSet || 10
     );
 
     // Calculate finals grade
@@ -148,8 +168,8 @@ const GradeCalculator: React.FC = () => {
       finalsState.quizMaxScores.filter((max): max is number => max !== null),
       finalsState.examScore || 0,
       finalsState.examMaxScore || 100,
-      finalsState.attendance || 0,
-      finalsState.problemSet || 0
+      finalsState.attendance || 10,
+      finalsState.problemSet || 10
     );
 
     // Calculate final grade and GPE
@@ -162,12 +182,12 @@ const GradeCalculator: React.FC = () => {
       finalGrade: finalGrade,
       gpe: gpe,
     });
-  }, [midtermState, finalsState]);
 
-  // Function to get grade color class
-  const getColorClass = (grade: number) => {
-    return getGradeColor(grade);
-  };
+    // Calculate points needed to reach 75
+    const needed = calculatePointsNeeded(midtermGrade, finalsGrade);
+    setPointsNeeded(needed);
+    
+  }, [midtermState, finalsState, errors]);
 
   return (
     <div className="w-full max-w-3xl mx-auto">
@@ -212,19 +232,68 @@ const GradeCalculator: React.FC = () => {
         />
       </div>
 
+      {/* Points Needed to Pass Section */}
+      <div className="calculator-card mt-8">
+        <div className="card-header bg-secondary text-secondary-foreground border-b border-gray-700">
+          Points Needed to Pass
+        </div>
+        <div className="calculator-body">
+          <div className="text-sm text-muted-foreground mb-4">
+            Based on your current grades, here's what you need to achieve a passing grade (75):
+          </div>
+          
+          {pointsNeeded.midtermNeeded !== null && (
+            <div className="bg-gray-700/50 p-4 rounded-lg mb-4">
+              <div className="font-medium mb-1">Midterm Points Needed:</div>
+              <div className="text-xl font-bold text-yellow-500">
+                {pointsNeeded.isPossible 
+                  ? `${naturalRound(pointsNeeded.midtermNeeded)} points`
+                  : "Not possible with current finals grade"}
+              </div>
+            </div>
+          )}
+          
+          {pointsNeeded.finalsNeeded !== null && (
+            <div className="bg-gray-700/50 p-4 rounded-lg mb-4">
+              <div className="font-medium mb-1">Finals Points Needed:</div>
+              <div className="text-xl font-bold text-yellow-500">
+                {pointsNeeded.isPossible 
+                  ? `${naturalRound(pointsNeeded.finalsNeeded)} points`
+                  : "Not possible with current midterm grade"}
+              </div>
+            </div>
+          )}
+          
+          {pointsNeeded.midtermNeeded === null && pointsNeeded.finalsNeeded === null && (
+            <div className={`p-4 rounded-lg mb-4 ${
+              grades.finalGrade >= 75 ? "bg-green-800/20" : "bg-red-800/20"
+            }`}>
+              <div className="font-medium mb-1">Current Status:</div>
+              <div className={`text-xl font-bold ${
+                grades.finalGrade >= 75 ? "text-green-500" : "text-calc-red"
+              }`}>
+                {grades.finalGrade >= 75 
+                  ? "You are currently passing! 🎉" 
+                  : "Need to improve both midterm and finals grades"}
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+
       {/* Final Results */}
       <div className="calculator-card mt-8">
-        <div className="card-header bg-calc-dark-purple">Final Results</div>
+        <div className="card-header bg-secondary text-secondary-foreground border-b border-gray-700">Final Results</div>
         <div className="calculator-body grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="grade-result">
             <h3>Final Grade</h3>
-            <div className={`grade-value text-2xl ${getColorClass(grades.finalGrade)}`}>
+            <div className={`grade-value text-2xl ${getGradeColor(grades.finalGrade)}`}>
               {formatFinalGrade(grades.finalGrade)}
             </div>
           </div>
           <div className="grade-result">
             <h3>Grade Point Equivalent (GPE)</h3>
-            <div className={`grade-value text-2xl ${getColorClass(grades.finalGrade)}`}>
+            <div className={`grade-value text-2xl ${getGradeColor(grades.finalGrade)}`}>
               {grades.gpe}
             </div>
           </div>
