@@ -244,10 +244,10 @@ const GradeCalculator: React.FC = () => {
           
           {pointsNeeded.midtermNeeded !== null && (
             <div className="bg-muted/50 p-4 rounded-lg mb-4">
-              <div className="font-medium mb-1">Midterm Points Needed:</div>
+              <div className="font-medium mb-1">Midterm Score Needed:</div>
               <div className="text-xl font-bold text-yellow-500">
                 {pointsNeeded.isPossible 
-                  ? `${naturalRound(pointsNeeded.midtermNeeded)} points`
+                  ? `${naturalRound(pointsNeeded.midtermNeeded)}/100 points`
                   : "Not possible with current finals grade"}
               </div>
             </div>
@@ -255,10 +255,10 @@ const GradeCalculator: React.FC = () => {
           
           {pointsNeeded.finalsNeeded !== null && (
             <div className="bg-muted/50 p-4 rounded-lg mb-4">
-              <div className="font-medium mb-1">Finals Points Needed:</div>
+              <div className="font-medium mb-1">Finals Score Needed:</div>
               <div className="text-xl font-bold text-yellow-500">
                 {pointsNeeded.isPossible 
-                  ? `${naturalRound(pointsNeeded.finalsNeeded)} points`
+                  ? `${naturalRound(pointsNeeded.finalsNeeded)}/100 points`
                   : "Not possible with current midterm grade"}
               </div>
             </div>
@@ -274,7 +274,7 @@ const GradeCalculator: React.FC = () => {
               }`}>
                 {grades.finalGrade >= 75 
                   ? "You are currently passing! 🎉" 
-                  : `You need to improve your grades by ${Math.ceil(75 - grades.finalGrade)} points`}
+                  : `You need to improve your grade by ${Math.ceil(75 - grades.finalGrade)} points`}
               </div>
             </div>
           )}

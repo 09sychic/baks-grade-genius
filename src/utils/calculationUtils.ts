@@ -1,4 +1,3 @@
-
 // Calculate adjusted quiz score
 export const calculateAdjustedQuiz = (scores: number[], maxScores: number[]): number => {
   // If any score or max is missing or zero, return 0
@@ -101,7 +100,6 @@ export const calculatePointsNeeded = (
   }
   
   // Default case: if both are empty, calculate minimum scores needed for both
-  // For the default case, we'll calculate how many points are needed in both periods
   // assuming equal performance in both (as a starting point)
   
   // If target = midterm * 0.3 + finals * 0.7 = 75
