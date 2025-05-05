@@ -192,11 +192,11 @@ const GradeCalculator: React.FC = () => {
   return (
     <div className="w-full max-w-3xl mx-auto">
       <div className="text-center mb-6">
-        <h1 className="text-3xl font-bold text-calc-purple flex items-center justify-center gap-2">
+        <h1 className="text-3xl font-bold text-primary flex items-center justify-center gap-2">
           <Calculator className="h-8 w-8" />
           <span>Calculus ni Baks</span>
         </h1>
-        <p className="text-calc-neutral-gray">
+        <p className="text-muted-foreground">
           Real-time grade calculator for Calculus students
         </p>
       </div>
@@ -234,7 +234,7 @@ const GradeCalculator: React.FC = () => {
 
       {/* Points Needed to Pass Section */}
       <div className="calculator-card mt-8">
-        <div className="card-header bg-secondary text-secondary-foreground border-b border-gray-700">
+        <div className="card-header border-b border-border">
           Points Needed to Pass
         </div>
         <div className="calculator-body">
@@ -243,7 +243,7 @@ const GradeCalculator: React.FC = () => {
           </div>
           
           {pointsNeeded.midtermNeeded !== null && (
-            <div className="bg-gray-700/50 p-4 rounded-lg mb-4">
+            <div className="bg-muted/50 p-4 rounded-lg mb-4">
               <div className="font-medium mb-1">Midterm Points Needed:</div>
               <div className="text-xl font-bold text-yellow-500">
                 {pointsNeeded.isPossible 
@@ -254,7 +254,7 @@ const GradeCalculator: React.FC = () => {
           )}
           
           {pointsNeeded.finalsNeeded !== null && (
-            <div className="bg-gray-700/50 p-4 rounded-lg mb-4">
+            <div className="bg-muted/50 p-4 rounded-lg mb-4">
               <div className="font-medium mb-1">Finals Points Needed:</div>
               <div className="text-xl font-bold text-yellow-500">
                 {pointsNeeded.isPossible 
@@ -266,11 +266,11 @@ const GradeCalculator: React.FC = () => {
           
           {pointsNeeded.midtermNeeded === null && pointsNeeded.finalsNeeded === null && (
             <div className={`p-4 rounded-lg mb-4 ${
-              grades.finalGrade >= 75 ? "bg-green-800/20" : "bg-red-800/20"
+              grades.finalGrade >= 75 ? "bg-green-800/20" : "bg-destructive/20"
             }`}>
               <div className="font-medium mb-1">Current Status:</div>
               <div className={`text-xl font-bold ${
-                grades.finalGrade >= 75 ? "text-green-500" : "text-calc-red"
+                grades.finalGrade >= 75 ? "text-green-500" : "text-destructive"
               }`}>
                 {grades.finalGrade >= 75 
                   ? "You are currently passing! 🎉" 
@@ -283,7 +283,7 @@ const GradeCalculator: React.FC = () => {
 
       {/* Final Results */}
       <div className="calculator-card mt-8">
-        <div className="card-header bg-secondary text-secondary-foreground border-b border-gray-700">Final Results</div>
+        <div className="card-header border-b border-border">Final Results</div>
         <div className="calculator-body grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="grade-result">
             <h3>Final Grade</h3>

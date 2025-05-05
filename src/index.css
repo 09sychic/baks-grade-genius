@@ -76,7 +76,7 @@
   }
 
   body {
-    @apply bg-calc-dark-bg text-foreground antialiased;
+    @apply bg-background text-foreground antialiased;
   }
   
   input[type="number"]::-webkit-outer-spin-button,
@@ -104,7 +104,7 @@
   }
   
   .grade-result {
-    @apply p-5 rounded-lg bg-gray-800/70 backdrop-blur-sm mb-2 animate-fade-in shadow-md border border-gray-700;
+    @apply p-5 rounded-lg bg-card/70 backdrop-blur-sm mb-2 animate-fade-in shadow-md border border-border;
   }
   
   .grade-result h3 {
@@ -116,11 +116,11 @@
   }
   
   .card-header {
-    @apply bg-calc-dark-purple text-white p-4 rounded-t-lg font-medium;
+    @apply bg-muted text-muted-foreground p-4 rounded-t-lg font-medium;
   }
   
   .calculator-card {
-    @apply bg-gray-800 rounded-lg overflow-hidden mb-6 border border-gray-700 transition-all duration-300 hover:border-calc-purple/50;
+    @apply bg-card rounded-lg overflow-hidden mb-6 border border-border transition-all duration-300 hover:border-primary/20;
   }
   
   .calculator-body {

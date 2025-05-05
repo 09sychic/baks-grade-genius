@@ -56,25 +56,15 @@ export default {
 					DEFAULT: 'hsl(var(--card))',
 					foreground: 'hsl(var(--card-foreground))'
 				},
-				sidebar: {
-					DEFAULT: 'hsl(var(--sidebar-background))',
-					foreground: 'hsl(var(--sidebar-foreground))',
-					primary: 'hsl(var(--sidebar-primary))',
-					'primary-foreground': 'hsl(var(--sidebar-primary-foreground))',
-					accent: 'hsl(var(--sidebar-accent))',
-					'accent-foreground': 'hsl(var(--sidebar-accent-foreground))',
-					border: 'hsl(var(--sidebar-border))',
-					ring: 'hsl(var(--sidebar-ring))'
-				},
-                calc: {
-                    purple: '#9b87f5',
-                    'dark-purple': '#7E69AB',
-                    'soft-purple': '#E5DEFF',
-                    'dark-bg': '#1A1F2C',
+				calc: {
+                    purple: '#6E6E6E', // Changed to neutral gray from purple
+                    'dark-purple': '#4E4E4E', // Changed to darker gray from purple
+                    'soft-purple': '#F1F1F1', // Changed to light gray from purple
+                    'dark-bg': '#111111', // Changed to near black
                     'light-gray': '#F1F1F1',
                     'neutral-gray': '#8E9196',
-                    blue: '#1EAEDB',
-                    red: '#ea384c'
+                    blue: '#555555', // Changed to neutral gray from blue
+                    red: '#E11D48' // Keeping red for errors/warnings
                 }
 			},
 			borderRadius: {
