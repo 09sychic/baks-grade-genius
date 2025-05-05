@@ -232,14 +232,14 @@ const GradeCalculator: React.FC = () => {
         />
       </div>
 
-      {/* Points Needed to Pass Section */}
+      {/* Scores Needed to Pass Section */}
       <div className="calculator-card mt-8">
         <div className="card-header border-b border-border">
-          Points Needed to Pass
+          Scores Needed to Pass (75%)
         </div>
         <div className="calculator-body">
           <div className="text-sm text-muted-foreground mb-4">
-            Based on your current grades, here's what you need to achieve a passing grade (75):
+            Based on your current grades, here's what final score you need to achieve a passing grade (75%):
           </div>
           
           {pointsNeeded.midtermNeeded !== null && (
@@ -247,9 +247,14 @@ const GradeCalculator: React.FC = () => {
               <div className="font-medium mb-1">Midterm Score Needed:</div>
               <div className="text-xl font-bold text-yellow-500">
                 {pointsNeeded.isPossible 
-                  ? `${naturalRound(pointsNeeded.midtermNeeded)}/100 points`
+                  ? `${naturalRound(pointsNeeded.midtermNeeded)}% overall score`
                   : "Not possible with current finals grade"}
               </div>
+              {pointsNeeded.isPossible && (
+                <div className="text-sm mt-1 text-muted-foreground">
+                  You need to achieve this score in your midterm period to reach a 75% final grade.
+                </div>
+              )}
             </div>
           )}
           
@@ -258,9 +263,14 @@ const GradeCalculator: React.FC = () => {
               <div className="font-medium mb-1">Finals Score Needed:</div>
               <div className="text-xl font-bold text-yellow-500">
                 {pointsNeeded.isPossible 
-                  ? `${naturalRound(pointsNeeded.finalsNeeded)}/100 points`
+                  ? `${naturalRound(pointsNeeded.finalsNeeded)}% overall score`
                   : "Not possible with current midterm grade"}
               </div>
+              {pointsNeeded.isPossible && (
+                <div className="text-sm mt-1 text-muted-foreground">
+                  You need to achieve this score in your finals period to reach a 75% final grade.
+                </div>
+              )}
             </div>
           )}
           
@@ -274,7 +284,7 @@ const GradeCalculator: React.FC = () => {
               }`}>
                 {grades.finalGrade >= 75 
                   ? "You are currently passing! 🎉" 
-                  : `You need to improve your grade by ${Math.ceil(75 - grades.finalGrade)} points`}
+                  : `You need to improve your overall grade by ${Math.ceil(75 - grades.finalGrade)} percentage points`}
               </div>
             </div>
           )}

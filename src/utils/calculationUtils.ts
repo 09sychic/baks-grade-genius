@@ -1,3 +1,4 @@
+
 // Calculate adjusted quiz score
 export const calculateAdjustedQuiz = (scores: number[], maxScores: number[]): number => {
   // If any score or max is missing or zero, return 0
@@ -58,7 +59,7 @@ export const naturalRound = (num: number): number => {
   return Math.round(num);
 };
 
-// Calculate points needed to reach a 75 final grade
+// Calculate scores needed to reach a 75 final grade
 export const calculatePointsNeeded = (
   currentMidterm: number, 
   currentFinals: number,
