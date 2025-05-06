@@ -1,7 +1,8 @@
 
 import React, { useState, useEffect } from "react";
 import GradingPeriod from "./GradingPeriod";
-import { Calculator, AlertCircle } from "lucide-react";
+import { Calculator, AlertCircle, Copy, Image } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { 
   calculatePeriodGrade, 
@@ -12,6 +13,7 @@ import {
   calculatePointsNeeded,
   naturalRound
 } from "@/utils/calculationUtils";
+import { copyGradesToClipboard, exportGradesAsImage } from "@/utils/exportUtils";
 
 const GradeCalculator: React.FC = () => {
   // Midterm state
@@ -57,6 +59,10 @@ const GradeCalculator: React.FC = () => {
     finalsNeeded: null as number | null,
     isPossible: true,
   });
+
+  // Action states
+  const [copying, setCopying] = useState(false);
+  const [exporting, setExporting] = useState(false);
 
   // Check if there are any validation errors
   const hasErrors = () => {
@@ -189,6 +195,32 @@ const GradeCalculator: React.FC = () => {
     
   }, [midtermState, finalsState, errors]);
 
+  // Handle copy to clipboard
+  const handleCopyToClipboard = async () => {
+    setCopying(true);
+    try {
+      await copyGradesToClipboard(midtermState, finalsState, grades);
+      // No notification shown to user as requested
+    } catch (error) {
+      console.error("Error copying to clipboard:", error);
+    } finally {
+      setCopying(false);
+    }
+  };
+
+  // Handle export as image
+  const handleExportAsImage = async () => {
+    setExporting(true);
+    try {
+      await exportGradesAsImage("grade-results-container");
+      // No notification shown to user as requested
+    } catch (error) {
+      console.error("Error exporting as image:", error);
+    } finally {
+      setExporting(false);
+    }
+  };
+
   return (
     <div className="w-full max-w-3xl mx-auto">
       <div className="text-center mb-6">
@@ -201,113 +233,140 @@ const GradeCalculator: React.FC = () => {
         </p>
       </div>
 
-      {/* Grading Periods */}
-      <div className="space-y-6">
-        <GradingPeriod
-          periodName="Midterm"
-          quizNumbers={[1, 2]}
-          quizScores={midtermState.quizScores}
-          quizMaxScores={midtermState.quizMaxScores}
-          examScore={midtermState.examScore}
-          examMaxScore={midtermState.examMaxScore}
-          attendance={midtermState.attendance}
-          problemSet={midtermState.problemSet}
-          periodGrade={grades.midterm}
-          onChange={handleMidtermChange}
-          errors={errors.midterm}
-        />
+      <div id="grade-results-container">
+        {/* Grading Periods */}
+        <div className="space-y-6">
+          <GradingPeriod
+            periodName="Midterm"
+            quizNumbers={[1, 2]}
+            quizScores={midtermState.quizScores}
+            quizMaxScores={midtermState.quizMaxScores}
+            examScore={midtermState.examScore}
+            examMaxScore={midtermState.examMaxScore}
+            attendance={midtermState.attendance}
+            problemSet={midtermState.problemSet}
+            periodGrade={grades.midterm}
+            onChange={handleMidtermChange}
+            errors={errors.midterm}
+          />
 
-        <GradingPeriod
-          periodName="Finals"
-          quizNumbers={[3, 4]}
-          quizScores={finalsState.quizScores}
-          quizMaxScores={finalsState.quizMaxScores}
-          examScore={finalsState.examScore}
-          examMaxScore={finalsState.examMaxScore}
-          attendance={finalsState.attendance}
-          problemSet={finalsState.problemSet}
-          periodGrade={grades.finals}
-          onChange={handleFinalsChange}
-          errors={errors.finals}
-        />
-      </div>
-
-      {/* Scores Needed to Pass Section */}
-      <div className="calculator-card mt-8">
-        <div className="card-header border-b border-border">
-          Scores Needed to Pass (75%)
+          <GradingPeriod
+            periodName="Finals"
+            quizNumbers={[3, 4]}
+            quizScores={finalsState.quizScores}
+            quizMaxScores={finalsState.quizMaxScores}
+            examScore={finalsState.examScore}
+            examMaxScore={finalsState.examMaxScore}
+            attendance={finalsState.attendance}
+            problemSet={finalsState.problemSet}
+            periodGrade={grades.finals}
+            onChange={handleFinalsChange}
+            errors={errors.finals}
+          />
         </div>
-        <div className="calculator-body">
-          <div className="text-sm text-muted-foreground mb-4">
-            Based on your current grades, here's what final score you need to achieve a passing grade (75%):
+
+        {/* Scores Needed to Pass Section */}
+        <div className="calculator-card mt-8">
+          <div className="card-header border-b border-border">
+            Scores Needed to Pass (75%)
           </div>
-          
-          {pointsNeeded.midtermNeeded !== null && (
-            <div className="bg-muted/50 p-4 rounded-lg mb-4">
-              <div className="font-medium mb-1">Midterm Score Needed:</div>
-              <div className="text-xl font-bold text-yellow-500">
-                {pointsNeeded.isPossible 
-                  ? `${naturalRound(pointsNeeded.midtermNeeded)}% overall score`
-                  : "Not possible with current finals grade"}
-              </div>
-              {pointsNeeded.isPossible && (
-                <div className="text-sm mt-1 text-muted-foreground">
-                  You need to achieve this score in your midterm period to reach a 75% final grade.
-                </div>
-              )}
+          <div className="calculator-body">
+            <div className="text-sm text-muted-foreground mb-4">
+              Based on your current grades, here's what final score you need to achieve a passing grade (75%):
             </div>
-          )}
-          
-          {pointsNeeded.finalsNeeded !== null && (
-            <div className="bg-muted/50 p-4 rounded-lg mb-4">
-              <div className="font-medium mb-1">Finals Score Needed:</div>
-              <div className="text-xl font-bold text-yellow-500">
-                {pointsNeeded.isPossible 
-                  ? `${naturalRound(pointsNeeded.finalsNeeded)}% overall score`
-                  : "Not possible with current midterm grade"}
-              </div>
-              {pointsNeeded.isPossible && (
-                <div className="text-sm mt-1 text-muted-foreground">
-                  You need to achieve this score in your finals period to reach a 75% final grade.
+            
+            {pointsNeeded.midtermNeeded !== null && (
+              <div className="bg-muted/50 p-4 rounded-lg mb-4">
+                <div className="font-medium mb-1">Midterm Score Needed:</div>
+                <div className="text-xl font-bold text-yellow-500">
+                  {pointsNeeded.isPossible 
+                    ? `${naturalRound(pointsNeeded.midtermNeeded)}% overall score`
+                    : "Not possible with current finals grade"}
                 </div>
-              )}
-            </div>
-          )}
-          
-          {pointsNeeded.midtermNeeded === null && pointsNeeded.finalsNeeded === null && (
-            <div className={`p-4 rounded-lg mb-4 ${
-              grades.finalGrade >= 75 ? "bg-green-800/20" : "bg-destructive/20"
-            }`}>
-              <div className="font-medium mb-1">Current Status:</div>
-              <div className={`text-xl font-bold ${
-                grades.finalGrade >= 75 ? "text-green-500" : "text-destructive"
+                {pointsNeeded.isPossible && (
+                  <div className="text-sm mt-1 text-muted-foreground">
+                    You need to achieve this score in your midterm period to reach a 75% final grade.
+                  </div>
+                )}
+              </div>
+            )}
+            
+            {pointsNeeded.finalsNeeded !== null && (
+              <div className="bg-muted/50 p-4 rounded-lg mb-4">
+                <div className="font-medium mb-1">Finals Score Needed:</div>
+                <div className="text-xl font-bold text-yellow-500">
+                  {pointsNeeded.isPossible 
+                    ? `${naturalRound(pointsNeeded.finalsNeeded)}% overall score`
+                    : "Not possible with current midterm grade"}
+                </div>
+                {pointsNeeded.isPossible && (
+                  <div className="text-sm mt-1 text-muted-foreground">
+                    You need to achieve this score in your finals period to reach a 75% final grade.
+                  </div>
+                )}
+              </div>
+            )}
+            
+            {pointsNeeded.midtermNeeded === null && pointsNeeded.finalsNeeded === null && (
+              <div className={`p-4 rounded-lg mb-4 ${
+                grades.finalGrade >= 75 ? "bg-green-800/20" : "bg-destructive/20"
               }`}>
-                {grades.finalGrade >= 75 
-                  ? "You are currently passing! 🎉" 
-                  : `You need to improve your overall grade by ${Math.ceil(75 - grades.finalGrade)} percentage points`}
+                <div className="font-medium mb-1">Current Status:</div>
+                <div className={`text-xl font-bold ${
+                  grades.finalGrade >= 75 ? "text-green-500" : "text-destructive"
+                }`}>
+                  {grades.finalGrade >= 75 
+                    ? "You are currently passing! 🎉" 
+                    : `You need to improve your overall grade by ${Math.ceil(75 - grades.finalGrade)} percentage points`}
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Final Results */}
+        <div className="calculator-card mt-8">
+          <div className="card-header border-b border-border">Final Results</div>
+          <div className="calculator-body grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grade-result">
+              <h3>Final Grade</h3>
+              <div className={`grade-value text-2xl ${getGradeColor(grades.finalGrade)}`}>
+                {formatFinalGrade(grades.finalGrade)}
               </div>
             </div>
-          )}
+            <div className="grade-result">
+              <h3>Grade Point Equivalent (GPE)</h3>
+              <div className={`grade-value text-2xl ${getGradeColor(grades.finalGrade)}`}>
+                {grades.gpe}
+              </div>
+            </div>
+          </div>
         </div>
       </div>
-
-      {/* Final Results */}
-      <div className="calculator-card mt-8">
-        <div className="card-header border-b border-border">Final Results</div>
-        <div className="calculator-body grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="grade-result">
-            <h3>Final Grade</h3>
-            <div className={`grade-value text-2xl ${getGradeColor(grades.finalGrade)}`}>
-              {formatFinalGrade(grades.finalGrade)}
-            </div>
-          </div>
-          <div className="grade-result">
-            <h3>Grade Point Equivalent (GPE)</h3>
-            <div className={`grade-value text-2xl ${getGradeColor(grades.finalGrade)}`}>
-              {grades.gpe}
-            </div>
-          </div>
-        </div>
+      
+      {/* Export Actions */}
+      <div className="flex justify-end mt-4 gap-2">
+        <Button 
+          variant="outline" 
+          size="sm" 
+          className="flex items-center gap-2"
+          onClick={handleCopyToClipboard}
+          disabled={copying || hasErrors()}
+        >
+          <Copy className="h-4 w-4" />
+          Copy to Clipboard
+        </Button>
+        
+        <Button 
+          variant="outline" 
+          size="sm" 
+          className="flex items-center gap-2"
+          onClick={handleExportAsImage}
+          disabled={exporting || hasErrors()}
+        >
+          <Image className="h-4 w-4" />
+          Export as Image
+        </Button>
       </div>
     </div>
   );
