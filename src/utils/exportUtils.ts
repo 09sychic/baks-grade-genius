@@ -64,11 +64,26 @@ export const exportGradesAsImage = async (elementId: string) => {
       throw new Error("Element not found");
     }
 
-    // Capture element as canvas
+    // Use a higher quality with better options for better layout capture
     const canvas = await html2canvas(element, {
       backgroundColor: null,
       scale: 2, // Higher resolution
       logging: false,
+      allowTaint: true,
+      useCORS: true,
+      // Force form input values to be displayed in the capture
+      onclone: (clonedDoc) => {
+        const inputs = clonedDoc.querySelectorAll('input');
+        inputs.forEach((input) => {
+          const originalInput = document.querySelector(`input[id="${input.id}"]`) as HTMLInputElement;
+          if (originalInput && originalInput.value) {
+            input.setAttribute('value', originalInput.value);
+            // For styling purposes, make inputs with values more visible
+            input.style.backgroundColor = 'rgba(255, 255, 255, 0.1)';
+            input.style.color = 'inherit';
+          }
+        });
+      }
     });
 
     // Convert canvas to base64 image

@@ -1,9 +1,8 @@
-
 import React, { useState, useEffect } from "react";
 import GradingPeriod from "./GradingPeriod";
-import { Calculator, AlertCircle, Copy, Image } from "lucide-react";
+import { Calculator, Copy, Image } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Card, CardHeader, CardContent } from "@/components/ui/card";
 import { 
   calculatePeriodGrade, 
   calculateFinalGrade, 
@@ -223,17 +222,18 @@ const GradeCalculator: React.FC = () => {
 
   return (
     <div className="w-full max-w-3xl mx-auto">
+      {/* Remove the duplicate header and keep just the calculator icon for context */}
       <div className="text-center mb-6">
-        <h1 className="text-3xl font-bold text-primary flex items-center justify-center gap-2">
+        <span className="inline-flex items-center justify-center text-primary">
           <Calculator className="h-8 w-8" />
-          <span>Calculus ni Baks</span>
-        </h1>
+        </span>
         <p className="text-muted-foreground">
           Real-time grade calculator for Calculus students
         </p>
       </div>
 
-      <div id="grade-results-container">
+      {/* Make this div have better styling for export */}
+      <div id="grade-results-container" className="space-y-6 rounded-lg overflow-hidden bg-background p-4 border border-border">
         {/* Grading Periods */}
         <div className="space-y-6">
           <GradingPeriod
@@ -266,11 +266,11 @@ const GradeCalculator: React.FC = () => {
         </div>
 
         {/* Scores Needed to Pass Section */}
-        <div className="calculator-card mt-8">
-          <div className="card-header border-b border-border">
-            Scores Needed to Pass (75%)
-          </div>
-          <div className="calculator-body">
+        <Card className="mt-6">
+          <CardHeader className="pb-3 px-5">
+            <h3 className="font-medium">Scores Needed to Pass (75%)</h3>
+          </CardHeader>
+          <CardContent>
             <div className="text-sm text-muted-foreground mb-4">
               Based on your current grades, here's what final score you need to achieve a passing grade (75%):
             </div>
@@ -285,7 +285,7 @@ const GradeCalculator: React.FC = () => {
                 </div>
                 {pointsNeeded.isPossible && (
                   <div className="text-sm mt-1 text-muted-foreground">
-                    You need to achieve this score in your midterm period to reach a 75% final grade.
+                    You need this score in your midterm period to reach a 75% final grade.
                   </div>
                 )}
               </div>
@@ -301,7 +301,7 @@ const GradeCalculator: React.FC = () => {
                 </div>
                 {pointsNeeded.isPossible && (
                   <div className="text-sm mt-1 text-muted-foreground">
-                    You need to achieve this score in your finals period to reach a 75% final grade.
+                    You need this score in your finals period to reach a 75% final grade.
                   </div>
                 )}
               </div>
@@ -321,27 +321,31 @@ const GradeCalculator: React.FC = () => {
                 </div>
               </div>
             )}
-          </div>
-        </div>
+          </CardContent>
+        </Card>
 
         {/* Final Results */}
-        <div className="calculator-card mt-8">
-          <div className="card-header border-b border-border">Final Results</div>
-          <div className="calculator-body grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="grade-result">
-              <h3>Final Grade</h3>
-              <div className={`grade-value text-2xl ${getGradeColor(grades.finalGrade)}`}>
-                {formatFinalGrade(grades.finalGrade)}
+        <Card className="mt-6">
+          <CardHeader className="pb-3 px-5">
+            <h3 className="font-medium">Final Results</h3>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grade-result">
+                <h3>Final Grade</h3>
+                <div className={`grade-value text-2xl ${getGradeColor(grades.finalGrade)}`}>
+                  {formatFinalGrade(grades.finalGrade)}
+                </div>
+              </div>
+              <div className="grade-result">
+                <h3>Grade Point Equivalent (GPE)</h3>
+                <div className={`grade-value text-2xl ${getGradeColor(grades.finalGrade)}`}>
+                  {grades.gpe}
+                </div>
               </div>
             </div>
-            <div className="grade-result">
-              <h3>Grade Point Equivalent (GPE)</h3>
-              <div className={`grade-value text-2xl ${getGradeColor(grades.finalGrade)}`}>
-                {grades.gpe}
-              </div>
-            </div>
-          </div>
-        </div>
+          </CardContent>
+        </Card>
       </div>
       
       {/* Export Actions */}
