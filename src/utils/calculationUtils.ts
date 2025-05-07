@@ -59,59 +59,236 @@ export const naturalRound = (num: number): number => {
   return Math.round(num);
 };
 
-// Calculate scores needed to reach a 75 final grade
-export const calculatePointsNeeded = (
-  currentMidterm: number, 
-  currentFinals: number,
+// Helper function to calculate the needed scores for missing quiz and exam values
+export const calculateNeededScores = (
+  periodState: {
+    quizScores: (number | null)[];
+    quizMaxScores: (number | null)[];
+    examScore: number | null;
+    examMaxScore: number | null;
+    attendance: number | null;
+    problemSet: number | null;
+  },
+  isFinals: boolean,
+  currentMidterm: number,
   targetGrade: number = 75
-): { 
-  midtermNeeded: number | null, 
-  finalsNeeded: number | null,
-  isPossible: boolean
+): {
+  neededScores: { [key: string]: string };
+  isPossible: boolean;
+  message?: string;
 } => {
-  // If both midterm and finals are valid, calculate how much more is needed
-  if (currentMidterm > 0 && currentFinals === 0) {
-    // Calculate how many points needed in finals
-    // target = midterm * 0.3 + finalsNeeded * 0.7
-    // finalsNeeded = (target - midterm * 0.3) / 0.7
-    const finalsNeeded = (targetGrade - currentMidterm * 0.3) / 0.7;
+  // Default attendance and problem set to full scores if missing
+  const attendance = periodState.attendance || 10;
+  const problemSet = periodState.problemSet || 10;
+  
+  // Initialize result object
+  const result = {
+    neededScores: {} as { [key: string]: string },
+    isPossible: true,
+    message: ""
+  };
+  
+  // Calculate how much this period needs to contribute to the final grade
+  let requiredContribution: number;
+  
+  if (isFinals) {
+    // For finals: target = midterm * 0.3 + finals * 0.7
+    // So, finals = (target - midterm * 0.3) / 0.7
+    requiredContribution = (targetGrade - (currentMidterm * 0.3)) / 0.7;
+  } else {
+    // For midterm: target = midterm * 0.3 + finals * 0.7 (assume finals = 100 for now)
+    // So, midterm = (target - 70) / 0.3
+    const assumedFinals = 100; // Optimistic assumption
+    requiredContribution = (targetGrade - (assumedFinals * 0.7)) / 0.3;
+  }
+  
+  // Check if it's mathematically possible
+  if (requiredContribution > 100) {
     return {
-      midtermNeeded: null,
-      finalsNeeded: finalsNeeded > 100 ? null : finalsNeeded,
-      isPossible: finalsNeeded <= 100
-    };
-  } else if (currentMidterm === 0 && currentFinals > 0) {
-    // Calculate how many points needed in midterm
-    // target = midtermNeeded * 0.3 + finals * 0.7
-    // midtermNeeded = (target - finals * 0.7) / 0.3
-    const midtermNeeded = (targetGrade - currentFinals * 0.7) / 0.3;
-    return {
-      midtermNeeded: midtermNeeded > 100 ? null : midtermNeeded,
-      finalsNeeded: null,
-      isPossible: midtermNeeded <= 100
-    };
-  } else if (currentMidterm > 0 && currentFinals > 0) {
-    // Both are already completed, check if they reach the target
-    const currentFinalGrade = calculateFinalGrade(currentMidterm, currentFinals);
-    return {
-      midtermNeeded: null,
-      finalsNeeded: null,
-      isPossible: currentFinalGrade >= targetGrade
+      neededScores: {},
+      isPossible: false,
+      message: isFinals 
+        ? "Even with perfect finals scores, you can't reach the target grade."
+        : "Even with perfect midterm scores, you'd need excellent finals to reach the target."
     };
   }
   
-  // Default case: if both are empty, calculate minimum scores needed for both
-  // assuming equal performance in both (as a starting point)
+  // Calculate what we already have from filled fields
+  const filledQuizScores = periodState.quizScores.filter((score): score is number => 
+    score !== null && score !== undefined);
+  const filledQuizMaxScores = periodState.quizMaxScores.filter((max): max is number => 
+    max !== null && max !== undefined);
   
-  // If target = midterm * 0.3 + finals * 0.7 = 75
-  // and if midterm = finals = x (equal performance)
-  // then 75 = x * 0.3 + x * 0.7 = x
-  // so x = 75
+  // Current contribution from quizzes (if any are filled)
+  let currentQuizContribution = 0;
+  if (filledQuizScores.length > 0) {
+    currentQuizContribution = calculateAdjustedQuiz(filledQuizScores, filledQuizMaxScores);
+  }
   
+  // Current contribution from exam (if filled)
+  let currentExamContribution = 0;
+  if (periodState.examScore !== null && periodState.examMaxScore !== null) {
+    currentExamContribution = calculateAdjustedExam(periodState.examScore, periodState.examMaxScore);
+  }
+  
+  // Current contribution from attendance and problem set
+  const attendanceContribution = (attendance / 10 * 100) * 0.10;
+  const problemSetContribution = (problemSet / 10 * 100) * 0.10;
+  
+  // Total current contribution
+  const currentTotalContribution = currentQuizContribution + currentExamContribution + 
+                                 attendanceContribution + problemSetContribution;
+  
+  // Calculate what more we need
+  const additionalNeeded = Math.max(0, requiredContribution - currentTotalContribution);
+  
+  // Check missing quiz scores
+  const missingQuizIndices = periodState.quizScores.map((score, index) => 
+    score === null ? index : -1).filter(index => index !== -1);
+  
+  // Check if exam score is missing
+  const isExamMissing = periodState.examScore === null;
+  
+  // Calculate needed scores based on what's missing
+  if (missingQuizIndices.length > 0 && !isExamMissing) {
+    // Only quizzes are missing
+    const quizWeight = 0.35; // Quiz weight in period grade
+    const neededQuizPercentage = (additionalNeeded / quizWeight);
+    
+    // This needs to be distributed across all missing quizzes
+    const perQuizPercentage = neededQuizPercentage * 2; // Double it since formula is (score*0.5)+50
+    
+    missingQuizIndices.forEach(index => {
+      const maxScore = periodState.quizMaxScores[index] || 100;
+      const neededScore = (perQuizPercentage / 100) * maxScore;
+      const quizNumber = isFinals ? index + 3 : index + 1; // Quiz 3/4 for finals, 1/2 for midterm
+      
+      result.neededScores[`Quiz ${quizNumber}`] = `Need ${Math.ceil(neededScore)} out of ${maxScore}`;
+    });
+  } 
+  else if (isExamMissing && missingQuizIndices.length === 0) {
+    // Only exam is missing
+    const examWeight = 0.45; // Exam weight in period grade
+    const neededExamPercentage = (additionalNeeded / examWeight);
+    
+    // Calculate actual score needed based on formula: ((score * 0.5) + 50)
+    const rawExamPercentage = (neededExamPercentage - 50) * 2;
+    const maxScore = periodState.examMaxScore || 100;
+    const neededScore = (rawExamPercentage / 100) * maxScore;
+    
+    result.neededScores["Major Exam"] = `Need ${Math.ceil(neededScore)} out of ${maxScore}`;
+  }
+  else if (missingQuizIndices.length > 0 && isExamMissing) {
+    // Both quizzes and exam are missing - distribute proportionally
+    // Assume equal distribution among missing components for simplicity
+    const quizWeight = 0.35; // Quiz weight
+    const examWeight = 0.45; // Exam weight
+    const totalMissingWeight = quizWeight + examWeight;
+    
+    // Distribute proportionally
+    const quizPortion = (quizWeight / totalMissingWeight) * additionalNeeded;
+    const examPortion = (examWeight / totalMissingWeight) * additionalNeeded;
+    
+    // Calculate for quizzes
+    const quizPercentageNeeded = (quizPortion / quizWeight);
+    const perQuizPercentage = quizPercentageNeeded * 2; // Double it since formula is (score*0.5)+50
+    
+    missingQuizIndices.forEach(index => {
+      const maxScore = periodState.quizMaxScores[index] || 100;
+      const neededScore = (perQuizPercentage / 100) * maxScore;
+      const quizNumber = isFinals ? index + 3 : index + 1; // Quiz 3/4 for finals, 1/2 for midterm
+      
+      result.neededScores[`Quiz ${quizNumber}`] = `Need ${Math.ceil(neededScore)} out of ${maxScore}`;
+    });
+    
+    // Calculate for exam
+    const examPercentageNeeded = (examPortion / examWeight);
+    const rawExamPercentage = (examPercentageNeeded - 50) * 2;
+    const maxScore = periodState.examMaxScore || 100;
+    const neededScore = (rawExamPercentage / 100) * maxScore;
+    
+    result.neededScores["Major Exam"] = `Need ${Math.ceil(neededScore)} out of ${maxScore}`;
+  }
+  
+  // Check if any needed scores exceed max scores
+  let allPossible = true;
+  for (const [key, value] of Object.entries(result.neededScores)) {
+    const [needed, max] = value.split(' out of ').map(v => parseInt(v.match(/\d+/)?.[0] || "0"));
+    if (needed > max) {
+      allPossible = false;
+      break;
+    }
+  }
+  
+  result.isPossible = allPossible;
+  if (!allPossible) {
+    result.message = "Some required scores exceed maximum possible scores.";
+  }
+  
+  return result;
+};
+
+// Calculate scores needed to reach a 75 final grade
+export const calculatePointsNeeded = (
+  midtermState: {
+    quizScores: (number | null)[];
+    quizMaxScores: (number | null)[];
+    examScore: number | null;
+    examMaxScore: number | null;
+    attendance: number | null;
+    problemSet: number | null;
+  },
+  finalsState: {
+    quizScores: (number | null)[];
+    quizMaxScores: (number | null)[];
+    examScore: number | null;
+    examMaxScore: number | null;
+    attendance: number | null;
+    problemSet: number | null;
+  },
+  currentMidtermGrade: number,
+  currentFinalsGrade: number,
+  targetGrade: number = 75
+): {
+  neededScores: { [key: string]: string };
+  isPossible: boolean;
+  message?: string;
+} => {
+  // Check if midterm is incomplete
+  const isMidtermComplete = midtermState.quizScores.every(score => score !== null) && 
+                           midtermState.examScore !== null;
+                           
+  // Check if finals is incomplete
+  const isFinalsComplete = finalsState.quizScores.every(score => score !== null) && 
+                          finalsState.examScore !== null;
+  
+  // If both periods are complete, return appropriate message
+  if (isMidtermComplete && isFinalsComplete) {
+    const finalGrade = calculateFinalGrade(currentMidtermGrade, currentFinalsGrade);
+    return {
+      neededScores: {},
+      isPossible: finalGrade >= targetGrade,
+      message: finalGrade >= targetGrade 
+        ? "All fields are filled and you've reached the target grade!"
+        : `All fields are filled but you've only reached ${finalGrade.toFixed(2)}%.`
+    };
+  }
+  
+  // If midterm is incomplete, calculate needed scores for midterm
+  if (!isMidtermComplete) {
+    return calculateNeededScores(midtermState, false, currentFinalsGrade, targetGrade);
+  }
+  
+  // If finals is incomplete, calculate needed scores for finals
+  if (!isFinalsComplete) {
+    return calculateNeededScores(finalsState, true, currentMidtermGrade, targetGrade);
+  }
+  
+  // Default fallback (should never reach here)
   return {
-    midtermNeeded: 75,
-    finalsNeeded: 75,
-    isPossible: true
+    neededScores: {},
+    isPossible: true,
+    message: "No missing fields detected."
   };
 };
 

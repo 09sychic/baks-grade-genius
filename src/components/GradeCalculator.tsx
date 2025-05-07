@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import GradingPeriod from "./GradingPeriod";
 import { Calculator, Copy, Image } from "lucide-react";
@@ -54,9 +55,9 @@ const GradeCalculator: React.FC = () => {
 
   // Points needed to reach 75
   const [pointsNeeded, setPointsNeeded] = useState({
-    midtermNeeded: null as number | null,
-    finalsNeeded: null as number | null,
+    neededScores: {} as { [key: string]: string },
     isPossible: true,
+    message: ""
   });
 
   // Action states
@@ -189,7 +190,12 @@ const GradeCalculator: React.FC = () => {
     });
 
     // Calculate points needed to reach 75
-    const needed = calculatePointsNeeded(midtermGrade, finalsGrade);
+    const needed = calculatePointsNeeded(
+      midtermState,
+      finalsState,
+      midtermGrade,
+      finalsGrade
+    );
     setPointsNeeded(needed);
     
   }, [midtermState, finalsState, errors]);
@@ -222,7 +228,7 @@ const GradeCalculator: React.FC = () => {
 
   return (
     <div className="w-full max-w-3xl mx-auto">
-      {/* Remove the duplicate header and keep just the calculator icon for context */}
+      {/* Calculator icon for context */}
       <div className="text-center mb-6">
         <span className="inline-flex items-center justify-center text-primary">
           <Calculator className="h-8 w-8" />
@@ -272,42 +278,33 @@ const GradeCalculator: React.FC = () => {
           </CardHeader>
           <CardContent>
             <div className="text-sm text-muted-foreground mb-4">
-              Based on your current grades, here's what final score you need to achieve a passing grade (75%):
+              Based on your current grades, here's what you need to achieve a passing grade (75%):
             </div>
             
-            {pointsNeeded.midtermNeeded !== null && (
+            {Object.keys(pointsNeeded.neededScores).length > 0 ? (
               <div className="bg-muted/50 p-4 rounded-lg mb-4">
-                <div className="font-medium mb-1">Midterm Score Needed:</div>
-                <div className="text-xl font-bold text-yellow-500">
-                  {pointsNeeded.isPossible 
-                    ? `${naturalRound(pointsNeeded.midtermNeeded)}% overall score`
-                    : "Not possible with current finals grade"}
-                </div>
-                {pointsNeeded.isPossible && (
-                  <div className="text-sm mt-1 text-muted-foreground">
-                    You need this score in your midterm period to reach a 75% final grade.
+                {Object.entries(pointsNeeded.neededScores).map(([key, value], index) => (
+                  <div key={index} className="mb-3 last:mb-0">
+                    <div className="font-medium mb-1">{key}:</div>
+                    <div className="text-xl font-bold text-yellow-500">
+                      {value}
+                    </div>
+                  </div>
+                ))}
+                
+                {pointsNeeded.message && (
+                  <div className="text-sm mt-3 text-muted-foreground">
+                    {pointsNeeded.message}
+                  </div>
+                )}
+                
+                {!pointsNeeded.isPossible && (
+                  <div className="text-sm mt-3 text-calc-red">
+                    Warning: It may not be possible to achieve the target grade with the current scores.
                   </div>
                 )}
               </div>
-            )}
-            
-            {pointsNeeded.finalsNeeded !== null && (
-              <div className="bg-muted/50 p-4 rounded-lg mb-4">
-                <div className="font-medium mb-1">Finals Score Needed:</div>
-                <div className="text-xl font-bold text-yellow-500">
-                  {pointsNeeded.isPossible 
-                    ? `${naturalRound(pointsNeeded.finalsNeeded)}% overall score`
-                    : "Not possible with current midterm grade"}
-                </div>
-                {pointsNeeded.isPossible && (
-                  <div className="text-sm mt-1 text-muted-foreground">
-                    You need this score in your finals period to reach a 75% final grade.
-                  </div>
-                )}
-              </div>
-            )}
-            
-            {pointsNeeded.midtermNeeded === null && pointsNeeded.finalsNeeded === null && (
+            ) : (
               <div className={`p-4 rounded-lg mb-4 ${
                 grades.finalGrade >= 75 ? "bg-green-800/20" : "bg-destructive/20"
               }`}>
@@ -315,9 +312,9 @@ const GradeCalculator: React.FC = () => {
                 <div className={`text-xl font-bold ${
                   grades.finalGrade >= 75 ? "text-green-500" : "text-destructive"
                 }`}>
-                  {grades.finalGrade >= 75 
+                  {pointsNeeded.message || (grades.finalGrade >= 75 
                     ? "You are currently passing! 🎉" 
-                    : `You need to improve your overall grade by ${Math.ceil(75 - grades.finalGrade)} percentage points`}
+                    : "You need to fill in more fields to calculate needed scores.")}
                 </div>
               </div>
             )}
