@@ -75,17 +75,17 @@ export const calculateNeededScores = (
 ): {
   neededScores: { [key: string]: string };
   isPossible: boolean;
-  message?: string;
+  message: string; // Changed from optional to required
 } => {
   // Default attendance and problem set to full scores if missing
   const attendance = periodState.attendance || 10;
   const problemSet = periodState.problemSet || 10;
   
-  // Initialize result object
+  // Initialize result object with default message
   const result = {
     neededScores: {} as { [key: string]: string },
     isPossible: true,
-    message: ""
+    message: "" // Set a default empty message
   };
   
   // Calculate how much this period needs to contribute to the final grade
@@ -165,6 +165,13 @@ export const calculateNeededScores = (
       
       result.neededScores[`Quiz ${quizNumber}`] = `Need ${Math.ceil(neededScore)} out of ${maxScore}`;
     });
+    
+    // Set a success message if scores are calculated
+    if (Object.keys(result.neededScores).length > 0) {
+      result.message = "Here are the scores you need to reach the target grade.";
+    } else {
+      result.message = "No missing quizzes detected.";
+    }
   } 
   else if (isExamMissing && missingQuizIndices.length === 0) {
     // Only exam is missing
@@ -177,6 +184,7 @@ export const calculateNeededScores = (
     const neededScore = (rawExamPercentage / 100) * maxScore;
     
     result.neededScores["Major Exam"] = `Need ${Math.ceil(neededScore)} out of ${maxScore}`;
+    result.message = "Here's the exam score you need to reach the target grade.";
   }
   else if (missingQuizIndices.length > 0 && isExamMissing) {
     // Both quizzes and exam are missing - distribute proportionally
@@ -208,6 +216,10 @@ export const calculateNeededScores = (
     const neededScore = (rawExamPercentage / 100) * maxScore;
     
     result.neededScores["Major Exam"] = `Need ${Math.ceil(neededScore)} out of ${maxScore}`;
+    result.message = "Here are the scores you need for both quizzes and exam to reach the target grade.";
+  } else {
+    // No missing components detected
+    result.message = "No missing components detected.";
   }
   
   // Check if any needed scores exceed max scores
@@ -216,12 +228,13 @@ export const calculateNeededScores = (
     const [needed, max] = value.split(' out of ').map(v => parseInt(v.match(/\d+/)?.[0] || "0"));
     if (needed > max) {
       allPossible = false;
+      result.message = "Some required scores exceed maximum possible scores.";
       break;
     }
   }
   
   result.isPossible = allPossible;
-  if (!allPossible) {
+  if (!allPossible && result.message === "") {
     result.message = "Some required scores exceed maximum possible scores.";
   }
   
@@ -252,7 +265,7 @@ export const calculatePointsNeeded = (
 ): {
   neededScores: { [key: string]: string };
   isPossible: boolean;
-  message?: string;
+  message: string; // Changed from optional to required
 } => {
   // Check if midterm is incomplete
   const isMidtermComplete = midtermState.quizScores.every(score => score !== null) && 
