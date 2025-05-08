@@ -1,7 +1,6 @@
 
 import React, { useState, useEffect } from "react";
 import GradingPeriod from "./GradingPeriod";
-import { Calculator, Copy, Image } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardContent } from "@/components/ui/card";
 import { 
@@ -13,7 +12,7 @@ import {
   calculatePointsNeeded,
   naturalRound
 } from "@/utils/calculationUtils";
-import { copyGradesToClipboard, exportGradesAsImage } from "@/utils/exportUtils";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const GradeCalculator: React.FC = () => {
   // Midterm state
@@ -57,12 +56,12 @@ const GradeCalculator: React.FC = () => {
   const [pointsNeeded, setPointsNeeded] = useState({
     neededScores: {} as { [key: string]: string },
     isPossible: true,
-    message: ""
+    message: "",
+    scenarios: [] as Array<{ description: string; scores: { [key: string]: string } }>
   });
 
-  // Action states
-  const [copying, setCopying] = useState(false);
-  const [exporting, setExporting] = useState(false);
+  // Selected scenario tab
+  const [selectedScenario, setSelectedScenario] = useState("main");
 
   // Check if there are any validation errors
   const hasErrors = () => {
@@ -200,45 +199,30 @@ const GradeCalculator: React.FC = () => {
     
   }, [midtermState, finalsState, errors]);
 
-  // Handle copy to clipboard
-  const handleCopyToClipboard = async () => {
-    setCopying(true);
-    try {
-      await copyGradesToClipboard(midtermState, finalsState, grades);
-      // No notification shown to user as requested
-    } catch (error) {
-      console.error("Error copying to clipboard:", error);
-    } finally {
-      setCopying(false);
+  // Get the scores to display for the current scenario
+  const getScoresForDisplay = () => {
+    if (selectedScenario === "main") {
+      return pointsNeeded.neededScores;
+    } else {
+      const scenarioIndex = parseInt(selectedScenario.replace("scenario", ""), 10) - 1;
+      return pointsNeeded.scenarios && pointsNeeded.scenarios[scenarioIndex] ? 
+        pointsNeeded.scenarios[scenarioIndex].scores : {};
     }
   };
 
-  // Handle export as image
-  const handleExportAsImage = async () => {
-    setExporting(true);
-    try {
-      await exportGradesAsImage("grade-results-container");
-      // No notification shown to user as requested
-    } catch (error) {
-      console.error("Error exporting as image:", error);
-    } finally {
-      setExporting(false);
+  // Get the description for the current scenario
+  const getScenarioDescription = () => {
+    if (selectedScenario === "main") {
+      return "Recommended approach";
+    } else {
+      const scenarioIndex = parseInt(selectedScenario.replace("scenario", ""), 10) - 1;
+      return pointsNeeded.scenarios && pointsNeeded.scenarios[scenarioIndex] ? 
+        pointsNeeded.scenarios[scenarioIndex].description : "";
     }
   };
 
   return (
     <div className="w-full max-w-3xl mx-auto">
-      {/* Calculator icon for context */}
-      <div className="text-center mb-6">
-        <span className="inline-flex items-center justify-center text-primary">
-          <Calculator className="h-8 w-8" />
-        </span>
-        <p className="text-muted-foreground">
-          Real-time grade calculator for Calculus students
-        </p>
-      </div>
-
-      {/* Make this div have better styling for export */}
       <div id="grade-results-container" className="space-y-6 rounded-lg overflow-hidden bg-background p-4 border border-border">
         {/* Grading Periods */}
         <div className="space-y-6">
@@ -281,28 +265,43 @@ const GradeCalculator: React.FC = () => {
               Based on your current grades, here's what you need to achieve a passing grade (75%):
             </div>
             
-            {Object.keys(pointsNeeded.neededScores).length > 0 ? (
-              <div className="bg-muted/50 p-4 rounded-lg mb-4">
-                {Object.entries(pointsNeeded.neededScores).map(([key, value], index) => (
-                  <div key={index} className="mb-3 last:mb-0">
-                    <div className="font-medium mb-1">{key}:</div>
-                    <div className="text-xl font-bold text-yellow-500">
-                      {value}
-                    </div>
+            {pointsNeeded.scenarios && pointsNeeded.scenarios.length > 0 ? (
+              <div>
+                <Tabs value={selectedScenario} onValueChange={setSelectedScenario} className="mb-4">
+                  <TabsList className="grid grid-cols-3 mb-4">
+                    <TabsTrigger value="main">Recommended</TabsTrigger>
+                    {pointsNeeded.scenarios.map((_, index) => (
+                      <TabsTrigger key={`scenario${index+1}`} value={`scenario${index+1}`}>
+                        Option {index+1}
+                      </TabsTrigger>
+                    )).slice(0, 2)}
+                  </TabsList>
+                  
+                  <div className="bg-muted/50 p-4 rounded-lg mb-4">
+                    <div className="font-medium text-primary mb-2">{getScenarioDescription()}</div>
+                    
+                    {Object.entries(getScoresForDisplay()).map(([key, value], index) => (
+                      <div key={index} className="mb-3 last:mb-0">
+                        <div className="font-medium mb-1">{key}:</div>
+                        <div className="text-xl font-bold text-yellow-500">
+                          {value}
+                        </div>
+                      </div>
+                    ))}
+                    
+                    {pointsNeeded.message && (
+                      <div className="text-sm mt-3 text-muted-foreground">
+                        {pointsNeeded.message}
+                      </div>
+                    )}
+                    
+                    {!pointsNeeded.isPossible && (
+                      <div className="text-sm mt-3 text-calc-red">
+                        Warning: It may not be possible to achieve the target grade with the current scores.
+                      </div>
+                    )}
                   </div>
-                ))}
-                
-                {pointsNeeded.message && (
-                  <div className="text-sm mt-3 text-muted-foreground">
-                    {pointsNeeded.message}
-                  </div>
-                )}
-                
-                {!pointsNeeded.isPossible && (
-                  <div className="text-sm mt-3 text-calc-red">
-                    Warning: It may not be possible to achieve the target grade with the current scores.
-                  </div>
-                )}
+                </Tabs>
               </div>
             ) : (
               <div className={`p-4 rounded-lg mb-4 ${
@@ -343,31 +342,6 @@ const GradeCalculator: React.FC = () => {
             </div>
           </CardContent>
         </Card>
-      </div>
-      
-      {/* Export Actions */}
-      <div className="flex justify-end mt-4 gap-2">
-        <Button 
-          variant="outline" 
-          size="sm" 
-          className="flex items-center gap-2"
-          onClick={handleCopyToClipboard}
-          disabled={copying || hasErrors()}
-        >
-          <Copy className="h-4 w-4" />
-          Copy to Clipboard
-        </Button>
-        
-        <Button 
-          variant="outline" 
-          size="sm" 
-          className="flex items-center gap-2"
-          onClick={handleExportAsImage}
-          disabled={exporting || hasErrors()}
-        >
-          <Image className="h-4 w-4" />
-          Export as Image
-        </Button>
       </div>
     </div>
   );
