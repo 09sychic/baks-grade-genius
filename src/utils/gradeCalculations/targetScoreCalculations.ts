@@ -26,11 +26,11 @@ export const calculateNeededScores = (
   const attendance = periodState.attendance || 10;
   const problemSet = periodState.problemSet || 10;
   
-  // Initialize result object with default message
+  // Initialize result object
   const result = {
     neededScores: {} as { [key: string]: string },
     isPossible: true,
-    message: "" // Set a default empty message
+    message: ""
   };
   
   // Calculate how much this period needs to contribute to the final grade
@@ -41,10 +41,9 @@ export const calculateNeededScores = (
     // So, finals = (target - midterm * 0.3) / 0.7
     requiredContribution = (targetGrade - (currentMidterm * 0.3)) / 0.7;
   } else {
-    // For midterm: target = midterm * 0.3 + finals * 0.7 (assume finals = 100 for now)
-    // So, midterm = (target - 70) / 0.3
-    const assumedFinals = 100; // Optimistic assumption
-    requiredContribution = (targetGrade - (assumedFinals * 0.7)) / 0.3;
+    // For midterm: target = midterm * 0.3 + finals * 0.7 (assume finals = targetGrade for minimum required)
+    // So, midterm = (target - targetGrade * 0.7) / 0.3
+    requiredContribution = (targetGrade - (targetGrade * 0.7)) / 0.3;
   }
   
   // Check if it's mathematically possible
@@ -87,100 +86,110 @@ export const calculateNeededScores = (
   // Calculate what more we need
   const additionalNeeded = Math.max(0, requiredContribution - currentTotalContribution);
   
-  // Check missing quiz scores
+  // Find missing quiz scores
   const missingQuizIndices = periodState.quizScores.map((score, index) => 
     score === null ? index : -1).filter(index => index !== -1);
   
   // Check if exam score is missing
   const isExamMissing = periodState.examScore === null;
   
-  // Calculate needed scores based on what's missing
-  if (missingQuizIndices.length > 0 && !isExamMissing) {
-    // Only quizzes are missing
-    const quizWeight = 0.35; // Quiz weight in period grade
-    const neededQuizPercentage = (additionalNeeded / quizWeight);
-    
-    // This needs to be distributed across all missing quizzes
-    const perQuizPercentage = neededQuizPercentage * 2; // Double it since formula is (score*0.5)+50
-    
-    missingQuizIndices.forEach(index => {
-      const maxScore = periodState.quizMaxScores[index] || 100;
-      const neededScore = (perQuizPercentage / 100) * maxScore;
-      const quizNumber = isFinals ? index + 3 : index + 1; // Quiz 3/4 for finals, 1/2 for midterm
-      
-      result.neededScores[`Quiz ${quizNumber}`] = `Need ${Math.ceil(neededScore)} out of ${maxScore}`;
-    });
-    
-    // Set a success message if scores are calculated
-    if (Object.keys(result.neededScores).length > 0) {
-      result.message = "Here are the scores you need to reach the target grade.";
-    } else {
-      result.message = "No missing quizzes detected.";
-    }
-  } 
-  else if (isExamMissing && missingQuizIndices.length === 0) {
-    // Only exam is missing
-    const examWeight = 0.45; // Exam weight in period grade
-    const neededExamPercentage = (additionalNeeded / examWeight);
-    
-    // Calculate actual score needed based on formula: ((score * 0.5) + 50)
-    const rawExamPercentage = (neededExamPercentage - 50) * 2;
-    const maxScore = periodState.examMaxScore || 100;
-    const neededScore = (rawExamPercentage / 100) * maxScore;
-    
-    result.neededScores["Major Exam"] = `Need ${Math.ceil(neededScore)} out of ${maxScore}`;
-    result.message = "Here's the exam score you need to reach the target grade.";
-  }
-  else if (missingQuizIndices.length > 0 && isExamMissing) {
-    // Both quizzes and exam are missing - distribute proportionally
-    // Assume equal distribution among missing components for simplicity
-    const quizWeight = 0.35; // Quiz weight
-    const examWeight = 0.45; // Exam weight
-    const totalMissingWeight = quizWeight + examWeight;
-    
-    // Distribute proportionally
-    const quizPortion = (quizWeight / totalMissingWeight) * additionalNeeded;
-    const examPortion = (examWeight / totalMissingWeight) * additionalNeeded;
-    
-    // Calculate for quizzes
-    const quizPercentageNeeded = (quizPortion / quizWeight);
-    const perQuizPercentage = quizPercentageNeeded * 2; // Double it since formula is (score*0.5)+50
-    
-    missingQuizIndices.forEach(index => {
-      const maxScore = periodState.quizMaxScores[index] || 100;
-      const neededScore = (perQuizPercentage / 100) * maxScore;
-      const quizNumber = isFinals ? index + 3 : index + 1; // Quiz 3/4 for finals, 1/2 for midterm
-      
-      result.neededScores[`Quiz ${quizNumber}`] = `Need ${Math.ceil(neededScore)} out of ${maxScore}`;
-    });
-    
-    // Calculate for exam
-    const examPercentageNeeded = (examPortion / examWeight);
-    const rawExamPercentage = (examPercentageNeeded - 50) * 2;
-    const maxScore = periodState.examMaxScore || 100;
-    const neededScore = (rawExamPercentage / 100) * maxScore;
-    
-    result.neededScores["Major Exam"] = `Need ${Math.ceil(neededScore)} out of ${maxScore}`;
-    result.message = "Here are the scores you need for both quizzes and exam to reach the target grade.";
-  } else {
-    // No missing components detected
-    result.message = "No missing components detected.";
+  // No missing fields, return early
+  if (missingQuizIndices.length === 0 && !isExamMissing) {
+    return {
+      neededScores: {},
+      isPossible: true,
+      message: "All fields are filled."
+    };
   }
   
-  // Check if any needed scores exceed max scores
-  let allPossible = true;
-  for (const [key, value] of Object.entries(result.neededScores)) {
-    const [needed, max] = value.split(' out of ').map(v => parseInt(v.match(/\d+/)?.[0] || "0"));
-    if (needed > max) {
-      allPossible = false;
+  // Calculate total weight of missing components
+  const quizWeight = 0.35; // Total quiz weight
+  const examWeight = 0.45; // Exam weight
+  
+  let totalMissingWeight = 0;
+  if (missingQuizIndices.length > 0) {
+    // If all quizzes are missing, full quiz weight is missing
+    // If some quizzes are missing, calculate proportional missing weight
+    const missingQuizProportion = missingQuizIndices.length / periodState.quizScores.length;
+    totalMissingWeight += quizWeight * missingQuizProportion;
+  }
+  
+  if (isExamMissing) {
+    totalMissingWeight += examWeight;
+  }
+  
+  // If there are missing components, distribute the needed additional contribution
+  if (totalMissingWeight > 0) {
+    // Process missing quizzes
+    if (missingQuizIndices.length > 0) {
+      const quizProportion = (quizWeight / totalMissingWeight) * additionalNeeded;
+      const perQuizAdditionalNeeded = quizProportion / missingQuizIndices.length;
+      
+      missingQuizIndices.forEach(index => {
+        const maxScore = periodState.quizMaxScores[index] || 100;
+        
+        // Calculate required raw score percentage before adjustment formula
+        // Formula used: ((score * 0.5) + 50) * 0.35 * (1/quizCount)
+        // So, solve for score: score = (requiredPercentage / (0.35 * (1/quizCount) * 0.5) - 50) * 2
+        
+        // Since the quiz contributes requiredPercentage to the overall grade:
+        const quizAdjustedContribution = perQuizAdditionalNeeded / (quizWeight / periodState.quizScores.length);
+        const rawPercentage = ((quizAdjustedContribution - 50) * 2);
+        
+        // Convert percentage to actual score
+        let neededScore = (rawPercentage / 100) * maxScore;
+        
+        // Clamp the score to be within realistic bounds
+        neededScore = Math.min(maxScore, Math.max(0, neededScore));
+        neededScore = Math.round(neededScore * 10) / 10; // Round to 1 decimal place
+        
+        const quizNumber = isFinals ? index + 3 : index + 1; // Quiz 3/4 for finals, 1/2 for midterm
+        
+        if (neededScore >= maxScore) {
+          result.neededScores[`Quiz ${quizNumber}`] = `Max score is ${maxScore}, may not be enough`;
+          result.isPossible = false;
+        } else if (neededScore <= 0) {
+          result.neededScores[`Quiz ${quizNumber}`] = `Any score will work`;
+        } else {
+          result.neededScores[`Quiz ${quizNumber}`] = `Need ${neededScore} out of ${maxScore}`;
+        }
+      });
+    }
+    
+    // Process missing exam
+    if (isExamMissing) {
+      const examProportion = (examWeight / totalMissingWeight) * additionalNeeded;
+      const maxScore = periodState.examMaxScore || 100;
+      
+      // Calculate required raw score percentage before adjustment formula
+      // Formula: ((score * 0.5) + 50) * 0.45 = examProportion
+      // Solve for score: score = (examProportion / 0.45 / 0.5 - 50) * 2
+      const examAdjustedContribution = examProportion / examWeight;
+      const rawPercentage = ((examAdjustedContribution - 50) * 2);
+      
+      // Convert percentage to actual score
+      let neededScore = (rawPercentage / 100) * maxScore;
+      
+      // Clamp the score
+      neededScore = Math.min(maxScore, Math.max(0, neededScore));
+      neededScore = Math.round(neededScore * 10) / 10; // Round to 1 decimal place
+      
+      if (neededScore >= maxScore) {
+        result.neededScores["Major Exam"] = `Max score is ${maxScore}, may not be enough`;
+        result.isPossible = false;
+      } else if (neededScore <= 0) {
+        result.neededScores["Major Exam"] = `Any score will work`;
+      } else {
+        result.neededScores["Major Exam"] = `Need ${neededScore} out of ${maxScore}`;
+      }
+    }
+    
+    // Set a message based on the possibility
+    if (!result.isPossible) {
       result.message = "Some required scores exceed maximum possible scores.";
-      break;
+    } else if (Object.keys(result.neededScores).length > 0) {
+      result.message = "Here are the scores you need to reach the target grade.";
     }
-  }
-  
-  result.isPossible = allPossible;
-  if (!allPossible && result.message === "") {
-    result.message = "Some required scores exceed maximum possible scores.";
   }
   
   return result;

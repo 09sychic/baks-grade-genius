@@ -1,7 +1,6 @@
-
 import React, { useState, useEffect } from "react";
 import GradingPeriod from "./GradingPeriod";
-import { Calculator, Copy, Image } from "lucide-react";
+import { Copy } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardContent } from "@/components/ui/card";
 import { 
@@ -13,7 +12,7 @@ import {
   calculatePointsNeeded,
   naturalRound
 } from "@/utils/calculationUtils";
-import { copyGradesToClipboard, exportGradesAsImage } from "@/utils/exportUtils";
+import { copyGradesToClipboard } from "@/utils/exportUtils";
 
 const GradeCalculator: React.FC = () => {
   // Midterm state
@@ -62,7 +61,6 @@ const GradeCalculator: React.FC = () => {
 
   // Action states
   const [copying, setCopying] = useState(false);
-  const [exporting, setExporting] = useState(false);
 
   // Check if there are any validation errors
   const hasErrors = () => {
@@ -213,32 +211,8 @@ const GradeCalculator: React.FC = () => {
     }
   };
 
-  // Handle export as image
-  const handleExportAsImage = async () => {
-    setExporting(true);
-    try {
-      await exportGradesAsImage("grade-results-container");
-      // No notification shown to user as requested
-    } catch (error) {
-      console.error("Error exporting as image:", error);
-    } finally {
-      setExporting(false);
-    }
-  };
-
   return (
     <div className="w-full max-w-3xl mx-auto">
-      {/* Calculator icon for context */}
-      <div className="text-center mb-6">
-        <span className="inline-flex items-center justify-center text-primary">
-          <Calculator className="h-8 w-8" />
-        </span>
-        <p className="text-muted-foreground">
-          Real-time grade calculator for Calculus students
-        </p>
-      </div>
-
-      {/* Make this div have better styling for export */}
       <div id="grade-results-container" className="space-y-6 rounded-lg overflow-hidden bg-background p-4 border border-border">
         {/* Grading Periods */}
         <div className="space-y-6">
@@ -345,7 +319,7 @@ const GradeCalculator: React.FC = () => {
         </Card>
       </div>
       
-      {/* Export Actions */}
+      {/* Export Actions - Only keeping Copy to Clipboard */}
       <div className="flex justify-end mt-4 gap-2">
         <Button 
           variant="outline" 
@@ -356,17 +330,6 @@ const GradeCalculator: React.FC = () => {
         >
           <Copy className="h-4 w-4" />
           Copy to Clipboard
-        </Button>
-        
-        <Button 
-          variant="outline" 
-          size="sm" 
-          className="flex items-center gap-2"
-          onClick={handleExportAsImage}
-          disabled={exporting || hasErrors()}
-        >
-          <Image className="h-4 w-4" />
-          Export as Image
         </Button>
       </div>
     </div>
