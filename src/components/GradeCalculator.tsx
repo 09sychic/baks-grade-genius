@@ -1,7 +1,6 @@
 
 import React, { useState, useEffect } from "react";
 import GradingPeriod from "./GradingPeriod";
-import { Copy } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardContent } from "@/components/ui/card";
 import { 
@@ -13,7 +12,6 @@ import {
   calculatePointsNeeded,
   naturalRound
 } from "@/utils/calculationUtils";
-import { copyGradesToClipboard } from "@/utils/exportUtils";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const GradeCalculator: React.FC = () => {
@@ -62,9 +60,6 @@ const GradeCalculator: React.FC = () => {
     scenarios: [] as Array<{ description: string; scores: { [key: string]: string } }>
   });
 
-  // Action states
-  const [copying, setCopying] = useState(false);
-  
   // Selected scenario tab
   const [selectedScenario, setSelectedScenario] = useState("main");
 
@@ -203,19 +198,6 @@ const GradeCalculator: React.FC = () => {
     setPointsNeeded(needed);
     
   }, [midtermState, finalsState, errors]);
-
-  // Handle copy to clipboard
-  const handleCopyToClipboard = async () => {
-    setCopying(true);
-    try {
-      await copyGradesToClipboard(midtermState, finalsState, grades);
-      // No notification shown to user as requested
-    } catch (error) {
-      console.error("Error copying to clipboard:", error);
-    } finally {
-      setCopying(false);
-    }
-  };
 
   // Get the scores to display for the current scenario
   const getScoresForDisplay = () => {
@@ -360,20 +342,6 @@ const GradeCalculator: React.FC = () => {
             </div>
           </CardContent>
         </Card>
-      </div>
-      
-      {/* Export Actions - Only keeping Copy to Clipboard */}
-      <div className="flex justify-end mt-4 gap-2">
-        <Button 
-          variant="outline" 
-          size="sm" 
-          className="flex items-center gap-2"
-          onClick={handleCopyToClipboard}
-          disabled={copying || hasErrors()}
-        >
-          <Copy className="h-4 w-4" />
-          Copy to Clipboard
-        </Button>
       </div>
     </div>
   );

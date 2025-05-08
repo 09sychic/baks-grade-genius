@@ -21,7 +21,7 @@ export const calculateNeededScores = (
   neededScores: { [key: string]: string };
   isPossible: boolean;
   message: string;
-  scenarios?: Array<{ description: string; scores: { [key: string]: string } }>;
+  scenarios: Array<{ description: string; scores: { [key: string]: string } }>;
 } => {
   // Default attendance and problem set to full scores if missing
   const attendance = periodState.attendance || 10;
@@ -55,7 +55,8 @@ export const calculateNeededScores = (
       isPossible: false,
       message: isFinals 
         ? "Even with perfect finals scores, you can't reach the target grade."
-        : "Even with perfect midterm scores, you'd need excellent finals to reach the target."
+        : "Even with perfect midterm scores, you'd need excellent finals to reach the target.",
+      scenarios: []
     };
   }
   
@@ -100,7 +101,8 @@ export const calculateNeededScores = (
     return {
       neededScores: {},
       isPossible: true,
-      message: "All fields are filled."
+      message: "All fields are filled.",
+      scenarios: []
     };
   }
 
@@ -110,7 +112,8 @@ export const calculateNeededScores = (
     return {
       neededScores: {},
       isPossible: true,
-      message
+      message,
+      scenarios: []
     };
   }
   
@@ -175,7 +178,7 @@ export const calculateNeededScores = (
     }
     
     // Add this scenario to the result
-    result.scenarios?.push({
+    result.scenarios.push({
       description: "Even distribution across all missing components",
       scores: scenario1Scores
     });
@@ -232,7 +235,7 @@ export const calculateNeededScores = (
     }
     
     // Add this scenario to the result
-    result.scenarios?.push({
+    result.scenarios.push({
       description: "Focus on Major Exam",
       scores: scenario2Scores
     });
@@ -250,21 +253,24 @@ export const calculateNeededScores = (
     let isPossible = true;
     
     // Calculate minimum required score for exam (if missing)
+    // We need to create a local variable for our adjusted needed points
+    let remainingNeeded = additionalNeeded;
+    
     if (isExamMissing) {
       const maxScore = periodState.examMaxScore || 100;
       // Require moderate score on exam (70%)
       const minExamScore = Math.min(maxScore, Math.ceil(maxScore * 0.7));
       scenario3Scores["Major Exam"] = `${minExamScore} out of ${maxScore}`;
       
-      // Adjust additionalNeeded for the exam contribution
+      // Adjust the local remainingNeeded variable for the exam contribution
       const examRawPercentage = (minExamScore / maxScore) * 100;
       const examAdjustedContribution = ((examRawPercentage * 0.5) + 50) * examWeight;
-      additionalNeeded -= examAdjustedContribution;
+      remainingNeeded -= examAdjustedContribution;
     }
     
     // Calculate how much each quiz needs to contribute
     const perQuizWeight = quizWeight / periodState.quizScores.length;
-    const perQuizNeeded = additionalNeeded / missingQuizIndices.length; 
+    const perQuizNeeded = remainingNeeded / missingQuizIndices.length; 
     
     missingQuizIndices.forEach(index => {
       const maxScore = periodState.quizMaxScores[index] || 100;
@@ -283,7 +289,7 @@ export const calculateNeededScores = (
     });
     
     // Add this scenario to the result
-    result.scenarios?.push({
+    result.scenarios.push({
       description: "Focus on Quizzes",
       scores: scenario3Scores
     });
@@ -316,7 +322,7 @@ export const calculatePointsNeeded = (
   neededScores: { [key: string]: string };
   isPossible: boolean;
   message: string;
-  scenarios?: Array<{ description: string; scores: { [key: string]: string } }>;
+  scenarios: Array<{ description: string; scores: { [key: string]: string } }>;
 } => {
   // Check if midterm is incomplete
   const isMidtermComplete = midtermState.quizScores.every(score => score !== null) && 
@@ -334,7 +340,8 @@ export const calculatePointsNeeded = (
       isPossible: finalGrade >= targetGrade,
       message: finalGrade >= targetGrade 
         ? "All fields are filled and you've reached the target grade!"
-        : `All fields are filled but you've only reached ${finalGrade.toFixed(2)}%.`
+        : `All fields are filled but you've only reached ${finalGrade.toFixed(2)}%.`,
+      scenarios: []
     };
   }
   
@@ -352,6 +359,7 @@ export const calculatePointsNeeded = (
   return {
     neededScores: {},
     isPossible: true,
-    message: "No missing fields detected."
+    message: "No missing fields detected.",
+    scenarios: []
   };
 };
